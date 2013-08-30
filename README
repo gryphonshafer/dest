@@ -1,5 +1,4 @@
 depst - Deployment State Manager
-=====
 
 depst is a simple "deployment state" change management tool. I really like
 what Sqitch is doing, but I wanted something that worked on more than just
