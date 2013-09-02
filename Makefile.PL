@@ -6,9 +6,8 @@ WriteMakefile(
     NAME             => 'App::Depst',
     AUTHOR           => q{Gryphon Shafer <gryphon@cpan.org>},
     VERSION_FROM     => 'lib/App/Depst.pm',
-    ABSTRACT_FROM    => 'lib/App/Depst.pm',
     LICENSE          => 'perl',
-    EXE_FILES        => ['depst'],
+    EXE_FILES        => ['bin/depst'],
     MAN1PODS         => { 'bin/depst' => '$(INST_MAN1DIR)/depst.1' },
     MIN_PERL_VERSION => '5.10.1',
     PREREQ_PM        => {

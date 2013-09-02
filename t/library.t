@@ -52,7 +52,7 @@ sub test_basics {
     eval{ App::Depst->status };
     my $status = _return();
     ok( !$@, 'status()' );
-    ok( $status eq "db\n + db/schema\n", 'status() output correct' );
+    ok( $status eq "diff - db\n  + db/schema\n", 'status() output correct' );
 
     eval{ App::Depst->clean };
     ok( !$@, 'clean()' );
