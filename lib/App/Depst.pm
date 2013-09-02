@@ -20,6 +20,7 @@ sub init {
 
 sub add {
     my ( $self, $dir ) = @_;
+    $dir =~ s|/$||;
 
     die "Not in project root directory or project not initialized\n" unless ( -d '.depst' );
     die "No directory specified; usage: depst add [directory]\n" unless ($dir);
@@ -63,24 +64,27 @@ sub status {
     die "Not in project root directory or project not initialized\n" unless ( -d '.depst' );
 
     for ( $self->_watches() ) {
-        print $_, "\n";
+        my ( $this_path, $printed_path ) = ( $_, 0 );
 
         File::DirCompare->compare( ".depst/$_", $_, sub {
             my ( $a, $b ) = @_;
             return if ( $a and $a =~ /\/depst.wrap$/ or $b and $b =~ /\/depst.wrap$/ );
+            print 'diff - ', $this_path, "\n" unless ( $printed_path++ );
 
             if ( not $b ) {
-                print ' - ', substr( $a, 7 ), "\n";
+                print '  - ', substr( $a, 7 ), "\n";
             }
             elsif ( not $a ) {
-                print " + $b\n";
+                print "  + $b\n";
             }
             else {
-                print " M $b\n";
+                print "  M $b\n";
             }
 
             return;
         } );
+
+        print 'ok - ', $this_path, "\n" unless ($printed_path);
     }
 
     return 0;
@@ -97,12 +101,10 @@ sub update {
 
         if ( not $b ) {
             $a =~ s|\.depst/||;
-            print 'revert ', $a, "\n";
             $self->revert($a);
         }
         elsif ( not $a ) {
             $self->deploy($b);
-            print 'deploy ', $b, "\n";
         }
         else {
 
@@ -113,7 +115,6 @@ sub update {
             my $type = $1;
 
             if ( $type eq 'deploy' ) {
-                print 'revert and re-deploy ', $a, "\n";
                 $self->revert($a);
                 $self->deploy($b);
             }
@@ -207,6 +208,7 @@ sub _action {
         );
 
         my $wrap;
+        shift @nodes if ( $nodes[0] eq '.depst' );
         while (@nodes) {
             my $path = join( '/', @nodes );
             if ( -f "$path/depst.wrap" ) {
@@ -216,7 +218,24 @@ sub _action {
             pop @nodes;
         }
 
-        run( ($wrap) ? "$wrap $file" : $file ) or die "Failed to execute $file (check permissions)\n";
+        if ( $type eq 'verify' ) {
+            my ( $out, $err );
+
+            run(
+                [ grep { defined } ( ($wrap) ? $wrap : undef ), $file ],
+                \undef, \$out, \$err,
+            ) or die "Failed to execute $file\n";
+
+            chomp($out);
+            die "$err\n" if ($err);
+
+            print '', ( ($out) ? 'ok' : 'not ok' ) . " - verify: $file\n";
+        }
+        else {
+            run( [ grep { defined } ( ($wrap) ? $wrap : undef ), $file ] ) or die "Failed to execute $file\n";
+            $file =~ s|^\.depst/||;
+            print "ok - $type: $file\n";
+        }
     }
 }
 
@@ -362,6 +381,11 @@ C<deploy> call will automatically call C<verify> when complete.
 This will run the verify step on any given action, or if no action name is
 provided, all actions under directories that are tracked.
 
+Unlike deploy and revert files, which can run the user through all sorts of
+user input/output, verify files must return some value that is either true
+or false. depst will assume that if it sees a true value, verification is
+confirmed. If it receives a false value, verification is assumed to have failed.
+
 =head2 revert NAME
 
 This tells depst to revert a specific action. For example, if you deployed
@@ -436,7 +460,13 @@ Let's then also say that the C<example/ls/deploy> file contains:
 I could create a deployment file C<example/depst.wrap> that looked like this:
 
     #!/bin/bash
-    /bin/bash $1
+    /bin/bash "$1"
+
+Wrappers will only ever be run from the current code. For example, if you have
+a revert file for some action and you checkout your working directory to a
+point in time prior to the revert file existing, depst maintains a copy of the
+original revert file so it can revert the action. However, it will always rely
+on whatever wrapper is in the current working directory.
 
 =head1 SEE ALSO
 
