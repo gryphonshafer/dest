@@ -165,6 +165,13 @@ sub clean {
     return 0;
 }
 
+sub preinstall {
+    my ($self) = @_;
+    die "Not in project root directory or project not initialized\n" unless ( -d '.depst' );
+    rmtree(".depst/$_") for ( $self->_watches() );
+    return 0;
+}
+
 sub _watches {
     open( my $watch, '<', '.depst/watch' ) or die "Unable to read .depst/watch file\n";
     return map { chomp; $_ } <$watch>;
@@ -257,6 +264,7 @@ depst COMMAND [DIR || NAME]
     depst list NAME       # dump a list of the template set (set of 3 files)
     depst status [DIR]    # check status of all tracked or specific directory
     depst clean           # reset depst state to match current files/directories
+    depst preinstall      # set depst state so an "update" will deploy everything
 
     depst deploy NAME     # deployment of a specific action
     depst verify [NAME]   # verification of tracked actions or specific action
@@ -364,6 +372,23 @@ Let's say that for some reason you have a delta between what depst thinks your
 system is and what your code says it ought to be, and you really believe your
 code is right. You can call C<clean> to tell depst to just assume that what
 the code says is right.
+
+=head2 preinstall
+
+Let's say you're setting up a new system or installing the project/application,
+so you start by creating yourself a working directory. At some point, you'll
+want to deploy all the deploy actions. You'll need to C<init> and C<add> the
+directories/paths you need. But depst will have a cache that matches the
+current working directory. At this point, you need to C<preinstall> to remove
+that cache and be in a state where you can C<update>.
+
+Here's an example of what you might want:
+
+    depst init
+    depst add path_to/stuff
+    depst add path_to/other_stuff
+    depst preinstall
+    depst update
 
 =head2 deploy NAME
 

@@ -35,6 +35,7 @@ depst COMMAND [DIR || NAME]
     depst list NAME       # dump a list of the template set (set of 3 files)
     depst status [DIR]    # check status of all tracked or specific directory
     depst clean           # reset depst state to match current files/directories
+    depst preinstall      # set depst state so an "update" will deploy everything
 
     depst deploy NAME     # deployment of a specific action
     depst verify [NAME]   # verification of tracked actions or specific action
@@ -143,6 +144,23 @@ system is and what your code says it ought to be, and you really believe your
 code is right. You can call C<clean> to tell depst to just assume that what
 the code says is right.
 
+=head2 preinstall
+
+Let's say you're setting up a new system or installing the project/application,
+so you start by creating yourself a working directory. At some point, you'll
+want to deploy all the deploy actions. You'll need to C<init> and C<add> the
+directories/paths you need. But depst will have a cache that matches the
+current working directory. At this point, you need to C<preinstall> to remove
+that cache and be in a state where you can C<update>.
+
+Here's an example of what you might want:
+
+    depst init
+    depst add path_to/stuff
+    depst add path_to/other_stuff
+    depst preinstall
+    depst update
+
 =head2 deploy NAME
 
 This tells depst to deploy a specific action. For example, if you called
@@ -158,6 +176,11 @@ C<deploy> call will automatically call C<verify> when complete.
 
 This will run the verify step on any given action, or if no action name is
 provided, all actions under directories that are tracked.
+
+Unlike deploy and revert files, which can run the user through all sorts of
+user input/output, verify files must return some value that is either true
+or false. depst will assume that if it sees a true value, verification is
+confirmed. If it receives a false value, verification is assumed to have failed.
 
 =head2 revert NAME
 
@@ -233,7 +256,13 @@ Let's then also say that the C<example/ls/deploy> file contains:
 I could create a deployment file C<example/depst.wrap> that looked like this:
 
     #!/bin/bash
-    /bin/bash $1
+    /bin/bash "$1"
+
+Wrappers will only ever be run from the current code. For example, if you have
+a revert file for some action and you checkout your working directory to a
+point in time prior to the revert file existing, depst maintains a copy of the
+original revert file so it can revert the action. However, it will always rely
+on whatever wrapper is in the current working directory.
 
 =head1 SEE ALSO
 
