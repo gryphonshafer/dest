@@ -5,7 +5,7 @@ use warnings;
 use Pod::Usage 'pod2usage';
 use App::Depst;
 
-my @commands = qw( init add make list status clean deploy verify revert update man );
+my @commands = qw( init add make list status clean preinstall deploy verify revert update man );
 
 my ( $command, @args ) = @ARGV;
 $command = lc( $command || 'undef' );

@@ -168,7 +168,10 @@ sub clean {
 sub preinstall {
     my ($self) = @_;
     die "Not in project root directory or project not initialized\n" unless ( -d '.depst' );
-    rmtree(".depst/$_") for ( $self->_watches() );
+    for ( $self->_watches() ) {
+        rmtree(".depst/$_");
+        mkdir(".depst/$_");
+    }
     return 0;
 }
 
@@ -181,8 +184,11 @@ sub _action {
     my ( $self, $path, $type ) = @_;
 
     if ($path) {
-        die "File not found: $path/$type\n" unless ( -f "$path/$type" );
-        $self->_execute("$path/$type");
+        unless ( -f "$path/$type" ) {
+            my $this_file = substr( $path, 7 );
+            die "Unable to $type $this_file (perhaps action has already occured)\n";
+        }
+        $self->_execute("$path/$type") or die "Failed to $type $path\n";
     }
     else {
         find( {
@@ -201,13 +207,20 @@ sub _action {
 {
     my %seen_files;
     sub _execute {
-        my ( $self, $file ) = @_;
+        my ( $self, $file, $quiet_verify ) = @_;
         return if ( $seen_files{$file}++ );
 
         my @nodes = split( '/', $file );
         my $type = pop @nodes;
+        ( my $action = join( '/', @nodes ) ) =~ s|^\.depst/||;
+
+        return if (
+            ( $type eq 'deploy' and -f '.depst/' . $file ) or
+            ( $type eq 'revert' and not -f $file )
+        );
 
         open( my $content, '<', $file ) or die "Unable to read $file\n";
+
         $self->_execute("$_/$type") for (
             grep { defined }
             map { /depst\.prereq\b[\s:=-]+(.+?)\s*$/; $1 || undef }
@@ -234,15 +247,19 @@ sub _action {
             ) or die "Failed to execute $file\n";
 
             chomp($out);
-            die "$err\n" if ($err);
+            return ($err) ? 0 : $out if ($quiet_verify);
 
-            print '', ( ($out) ? 'ok' : 'not ok' ) . " - verify: $file\n";
+            die "$err\n" if ($err);
+            print '', ( ($out) ? 'ok' : 'not ok' ) . " - verify: $action\n";
         }
         else {
+            print "begin - $type: $action\n";
             run( [ grep { defined } ( ($wrap) ? $wrap : undef ), $file ] ) or die "Failed to execute $file\n";
             $file =~ s|^\.depst/||;
-            print "ok - $type: $file\n";
+            print "ok - $type: $action\n";
         }
+
+        return 1;
     }
 }
 
