@@ -53,8 +53,26 @@ sub make {
 
 sub list {
     my ( $self, $path ) = @_;
-    die "No name specified; usage: depst list [path]\n" unless ($path);
-    print join( ' ', map { "$path/$_" } qw( deploy verify revert ) ), "\n";
+
+    if ($path) {
+        print join( ' ', map { "$path/$_" } qw( deploy verify revert ) ), "\n";
+    }
+    else {
+        for my $path ( $self->_watches() ) {
+            print $path, "\n";
+
+            find( {
+                follow   => 1,
+                no_chdir => 1,
+                wanted   => sub {
+                    return unless ( m|/deploy$| );
+                    ( my $action = $_ ) =~ s|/deploy$||;
+                    print '  ', $action, "\n";
+                },
+            }, $path );
+        }
+    }
+
     return 0;
 }
 
@@ -278,7 +296,7 @@ depst COMMAND [DIR || NAME]
     depst init            # initialize depst for a project
     depst add DIR         # add a directory to depst tracking list
     depst make NAME       # create a named template set (set of 3 files)
-    depst list NAME       # dump a list of the template set (set of 3 files)
+    depst list [NAME]     # dump a list of the template set (set of 3 files)
     depst status [DIR]    # check status of all tracked or specific directory
     depst clean           # reset depst state to match current files/directories
     depst preinstall      # set depst state so an "update" will deploy everything
@@ -355,12 +373,15 @@ So if you want, you can do something like this:
 
     vi `depst make db/schema`
 
-=head2 list NAME
+=head2 list [NAME]
 
-Just does the last step of C<make>. It lists out the relative paths of the 3
-files, so you can do stuff like:
+If provided a name of an action, it does the last step of C<make>. It lists
+out the relative paths of the 3 files, so you can do stuff like:
 
     vi `depst list db/schema`
+
+If not provided a name of an action, it will list all tracked directories and
+every action within each directory.
 
 =head2 status [DIR]
 
@@ -368,10 +389,11 @@ This command will tell you your current state compared to what the current code
 says your state should be. For example, if you called status with no optional
 directory parameter, you might see something like this:
 
-    db
-     + db/new_function
-     - db/lolcats
-     M db/schema/deploy
+    diff - db
+      + db/new_function
+      - db/lolcats
+      M db/schema/deploy
+    ok - etc
 
 depst will report for each tracked directory what are new changes that haven't
 yet been deployed (marked with a "+"), features that have been deployed in your
