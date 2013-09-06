@@ -2,3 +2,8 @@ Revision history for App::Depst
 
 1.01    Fri Aug 30 10:27:20 PDT 2013
         First version, released on an unsuspecting world.
+
+1.02    Fri Sep  6 14:09:05 PDT 2013
+        Added the redeploy feature
+        Expanded list functionality to include list all actions
+        Fixed preinstall and dependency trees for deploy and revert
