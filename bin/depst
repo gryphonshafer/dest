@@ -2,12 +2,10 @@
 use strict;
 use warnings;
 
-use lib '/home/gryphon/depst/lib';
-
 use Pod::Usage 'pod2usage';
 use App::Depst;
 
-my @commands = qw( init add make list status clean preinstall deploy verify revert update man );
+my @commands = qw( init add make list status clean preinstall deploy redeploy verify revert update man );
 
 my ( $command, @args ) = @ARGV;
 $command = lc( $command || 'undef' );
@@ -40,6 +38,7 @@ depst COMMAND [DIR || NAME]
     depst preinstall      # set depst state so an "update" will deploy everything
 
     depst deploy NAME     # deployment of a specific action
+    depst redeploy NAME   # deployment of a specific action
     depst verify [NAME]   # verification of tracked actions or specific action
     depst revert NAME     # revertion of a specific action
     depst update          # automaticall deploy or revert to cause currency
@@ -177,6 +176,12 @@ want to:
 
 Note that you shouldn't add "/deploy" to the end of that. Also note that a
 C<deploy> call will automatically call C<verify> when complete.
+
+=head2 redeploy NAME
+
+This is exactly the same as deploy, except that if you've already deployed an
+action, "redeploy" will let you deploy the action again, whereas "deploy"
+shouldn't.
 
 =head2 verify [NAME]
 

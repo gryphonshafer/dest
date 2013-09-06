@@ -152,13 +152,18 @@ sub verify {
 }
 
 sub deploy {
-    my ( $self, $name ) = @_;
+    my ( $self, $name, $redeploy ) = @_;
     die "File to deploy required; usage: depst deploy file\n" unless ($name);
     die "Not in project root directory or project not initialized\n" unless ( -d '.depst' );
-    my $rv = $self->_action( $name, 'deploy' );
+    my $rv = $self->_action( $name, 'deploy', $redeploy );
     $self->verify($name);
     dircopy( $name, ".depst/$name" );
     return $rv;
+}
+
+sub redeploy {
+    my ( $self, $name ) = @_;
+    return $self->deploy( $name, 'redeploy' );
 }
 
 sub revert {
@@ -199,14 +204,14 @@ sub _watches {
 }
 
 sub _action {
-    my ( $self, $path, $type ) = @_;
+    my ( $self, $path, $type, $redeploy ) = @_;
 
     if ($path) {
         unless ( -f "$path/$type" ) {
             my $this_file = substr( $path, 7 );
             die "Unable to $type $this_file (perhaps action has already occured)\n";
         }
-        $self->_execute("$path/$type") or die "Failed to $type $path\n";
+        $self->_execute( "$path/$type", $redeploy ) or die "Failed to $type $path\n";
     }
     else {
         find( {
@@ -214,7 +219,7 @@ sub _action {
             no_chdir => 1,
             wanted   => sub {
                 return unless ( /\/$type$/ );
-                $self->_execute($_);
+                $self->_execute($_) or die "Failed to $type $_\n";
             },
         }, $self->_watches() );
     }
@@ -225,7 +230,7 @@ sub _action {
 {
     my %seen_files;
     sub _execute {
-        my ( $self, $file, $quiet_verify ) = @_;
+        my ( $self, $file, $quiet_verify_or_redeploy ) = @_;
         return if ( $seen_files{$file}++ );
 
         my @nodes = split( '/', $file );
@@ -233,7 +238,7 @@ sub _action {
         ( my $action = join( '/', @nodes ) ) =~ s|^\.depst/||;
 
         return if (
-            ( $type eq 'deploy' and -f '.depst/' . $file ) or
+            ( $type eq 'deploy' and not $quiet_verify_or_redeploy and -f '.depst/' . $file ) or
             ( $type eq 'revert' and not -f $file )
         );
 
@@ -265,7 +270,7 @@ sub _action {
             ) or die "Failed to execute $file\n";
 
             chomp($out);
-            return ($err) ? 0 : $out if ($quiet_verify);
+            return ($err) ? 0 : $out if ($quiet_verify_or_redeploy);
 
             die "$err\n" if ($err);
             print '', ( ($out) ? 'ok' : 'not ok' ) . " - verify: $action\n";
@@ -302,6 +307,7 @@ depst COMMAND [DIR || NAME]
     depst preinstall      # set depst state so an "update" will deploy everything
 
     depst deploy NAME     # deployment of a specific action
+    depst redeploy NAME   # deployment of a specific action
     depst verify [NAME]   # verification of tracked actions or specific action
     depst revert NAME     # revertion of a specific action
     depst update          # automaticall deploy or revert to cause currency
@@ -439,6 +445,12 @@ want to:
 
 Note that you shouldn't add "/deploy" to the end of that. Also note that a
 C<deploy> call will automatically call C<verify> when complete.
+
+=head2 redeploy NAME
+
+This is exactly the same as deploy, except that if you've already deployed an
+action, "redeploy" will let you deploy the action again, whereas "deploy"
+shouldn't.
 
 =head2 verify [NAME]
 
