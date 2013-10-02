@@ -30,7 +30,7 @@ sub add {
     open( my $watch, '>>', '.depst/watch' ) or die "Unable to write .depst/watch file\n";
     print $watch $dir, "\n";
 
-    dircopy( $dir, ".depst/$dir" );
+    mkpath(".depst/$dir");
     return 0;
 }
 
@@ -259,7 +259,7 @@ sub _action {
         my $type = pop @nodes;
         ( my $action = join( '/', @nodes ) ) =~ s|^\.depst/||;
 
-        return if (
+        die 'Action already '. $type . "ed\n" if (
             ( $type eq 'deploy' and not $quiet_verify_or_redeploy and -f '.depst/' . $file ) or
             ( $type eq 'revert' and not -f $file )
         );
