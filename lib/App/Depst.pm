@@ -34,6 +34,22 @@ sub add {
     return 0;
 }
 
+sub rm {
+    my ( $self, $dir ) = @_;
+    $dir =~ s|/$||;
+
+    die "Not in project root directory or project not initialized\n" unless ( -d '.depst' );
+    die "No directory specified; usage: depst add [directory]\n" unless ($dir);
+    die "Directory $dir not currently tracked\n" unless ( grep { $dir eq $_ } $self->_watches() );
+
+    my @watches = $self->_watches();
+    open( my $watch, '>', '.depst/watch' ) or die "Unable to write .depst/watch file\n";
+    print $watch $_, "\n" for ( grep { $_ ne $dir } @watches );
+
+    rmtree(".depst/$dir");
+    return 0;
+}
+
 sub make {
     my ( $self, $path ) = @_;
     die "No name specified; usage: depst make [path]\n" unless ($path);
@@ -161,11 +177,6 @@ sub deploy {
     return $rv;
 }
 
-sub redeploy {
-    my ( $self, $name ) = @_;
-    return $self->deploy( $name, 'redeploy' );
-}
-
 sub revert {
     my ( $self, $name ) = @_;
     die "File to revert required; usage: depst revert file\n" unless ($name);
@@ -173,6 +184,17 @@ sub revert {
     my $rv = $self->_action( ".depst/$name", 'revert' );
     rmtree(".depst/$name");
     return $rv;
+}
+
+sub redeploy {
+    my ( $self, $name ) = @_;
+    return $self->deploy( $name, 'redeploy' );
+}
+
+sub revdeploy {
+    my ( $self, $name ) = @_;
+    $self->revert($name);
+    return $self->deploy($name);
 }
 
 sub clean {
@@ -300,6 +322,7 @@ depst COMMAND [DIR || NAME]
 
     depst init            # initialize depst for a project
     depst add DIR         # add a directory to depst tracking list
+    depst rm DIR          # remove a directory from depst tracking list
     depst make NAME       # create a named template set (set of 3 files)
     depst list [NAME]     # dump a list of the template set (set of 3 files)
     depst status [DIR]    # check status of all tracked or specific directory
@@ -307,9 +330,10 @@ depst COMMAND [DIR || NAME]
     depst preinstall      # set depst state so an "update" will deploy everything
 
     depst deploy NAME     # deployment of a specific action
-    depst redeploy NAME   # deployment of a specific action
     depst verify [NAME]   # verification of tracked actions or specific action
     depst revert NAME     # revertion of a specific action
+    depst redeploy NAME   # deployment of a specific action
+    depst revdeploy NAME  # revert and deployment of a specific action
     depst update          # automaticall deploy or revert to cause currency
 
     depst help            # display command synposis
@@ -365,6 +389,10 @@ directory, add the files: deploy, revert, and verify.
 The deploy file contains the instructions to create the database schema. The
 revert file contains the instructions to revert what the deploy file did. And
 the verify file let's you verify the deploy file worked.
+
+=head2 rm DIR
+
+This removes a directory from the depst tracking list.
 
 =head2 make NAME
 
@@ -446,12 +474,6 @@ want to:
 Note that you shouldn't add "/deploy" to the end of that. Also note that a
 C<deploy> call will automatically call C<verify> when complete.
 
-=head2 redeploy NAME
-
-This is exactly the same as deploy, except that if you've already deployed an
-action, "redeploy" will let you deploy the action again, whereas "deploy"
-shouldn't.
-
 =head2 verify [NAME]
 
 This will run the verify step on any given action, or if no action name is
@@ -468,6 +490,17 @@ This tells depst to revert a specific action. For example, if you deployed
 C<db/new_function> but then you wanted to revert it, you'd:
 
     depst revert db/new_function
+
+=head2 redeploy NAME
+
+This is exactly the same as deploy, except that if you've already deployed an
+action, "redeploy" will let you deploy the action again, whereas "deploy"
+shouldn't.
+
+=head2 revdeploy NAME
+
+This is exactly the same as conducting a revert of an action followed by a
+deploy of the same action.
 
 =head2 update
 
