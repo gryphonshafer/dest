@@ -9,7 +9,7 @@ use File::Find 'find';
 use File::Path qw( mkpath rmtree );
 use IPC::Run 'run';
 
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 
 sub init {
     die "Project already initialized\n" if ( -d '.depst' );

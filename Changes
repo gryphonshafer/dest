@@ -7,3 +7,8 @@ Revision history for App::Depst
         Added the redeploy feature
         Expanded list functionality to include list all actions
         Fixed preinstall and dependency trees for deploy and revert
+
+1.03    Wed Oct  2 12:38:51 PDT 2013
+        Fixed to bug where "add" results in a pre-deployed state
+        Pre-deployed state error reporting improved
+        Added helper commands: rm, revdeploy
