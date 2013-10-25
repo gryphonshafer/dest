@@ -8,8 +8,9 @@ use File::DirCompare ();
 use File::Find 'find';
 use File::Path qw( mkpath rmtree );
 use IPC::Run 'run';
+use Text::Diff ();
 
-our $VERSION = '1.03';
+our $VERSION = '1.04';
 
 sub init {
     die "Project already initialized\n" if ( -d '.depst' );
@@ -97,10 +98,11 @@ sub status {
 
     die "Not in project root directory or project not initialized\n" unless ( -d '.depst' );
 
+    my %seen_actions;
     for ( $self->_watches() ) {
         my ( $this_path, $printed_path ) = ( $_, 0 );
 
-        File::DirCompare->compare( ".depst/$_", $_, sub {
+        eval { File::DirCompare->compare( ".depst/$_", $_, sub {
             my ( $a, $b ) = @_;
             return if ( $a and $a =~ /\/depst.wrap$/ or $b and $b =~ /\/depst.wrap$/ );
             print 'diff - ', $this_path, "\n" unless ( $printed_path++ );
@@ -112,14 +114,39 @@ sub status {
                 print "  + $b\n";
             }
             else {
-                print "  M $b\n";
+                ( my $action = $b ) =~ s\/(?:deploy|verify|revert)$\\;
+                print "  $action\n" unless ( $seen_actions{$action}++ );
+                print "    M $b\n";
             }
 
             return;
-        } );
+        } ) };
 
-        print 'ok - ', $this_path, "\n" unless ($printed_path);
+        if ( $@ and $@ =~ /Not a directory/ ) {
+            print '? - ', $this_path, "\n";
+        }
+        else {
+            print 'ok - ', $this_path, "\n" unless ($printed_path);
+        }
     }
+
+    return 0;
+}
+
+sub diff {
+    my ( $self, $path ) = @_;
+
+    if ( not defined $path ) {
+        $self->diff($_) for ( $self->_watches() );
+        return 0;
+    }
+
+    eval { File::DirCompare->compare( ".depst/$path", $path, sub {
+        my ( $a, $b ) = @_;
+        return if ( $a and $a =~ /\/depst.wrap$/ or $b and $b =~ /\/depst.wrap$/ );
+        print Text::Diff::diff( $a, $b );
+        return;
+    } ) };
 
     return 0;
 }
@@ -199,14 +226,11 @@ sub revdeploy {
 
 sub clean {
     my ($self) = @_;
-
     die "Not in project root directory or project not initialized\n" unless ( -d '.depst' );
-    my @watches = $self->_watches();
-
-    rmtree('.depst');
-    $self->init();
-    $self->add($_) for (@watches);
-
+    for ( $self->_watches() ) {
+        rmtree(".depst/$_");
+        dircopy( $_, ".depst/$_" );
+    }
     return 0;
 }
 
@@ -252,21 +276,28 @@ sub _action {
 {
     my %seen_files;
     sub _execute {
-        my ( $self, $file, $quiet_verify_or_redeploy ) = @_;
+        my ( $self, $file, $run_quiet, $is_dependency ) = @_;
         return if ( $seen_files{$file}++ );
 
         my @nodes = split( '/', $file );
         my $type = pop @nodes;
         ( my $action = join( '/', @nodes ) ) =~ s|^\.depst/||;
 
-        die 'Action already '. $type . "ed\n" if (
-            ( $type eq 'deploy' and not $quiet_verify_or_redeploy and -f '.depst/' . $file ) or
+        if (
+            ( $type eq 'deploy' and not $run_quiet and -f '.depst/' . $file ) or
             ( $type eq 'revert' and not -f $file )
-        );
+        ) {
+            if ( $is_dependency ) {
+                return;
+            }
+            else {
+                die 'Action already '. $type . "ed\n";
+            }
+        }
 
         open( my $content, '<', $file ) or die "Unable to read $file\n";
 
-        $self->_execute("$_/$type") for (
+        $self->_execute( "$_/$type", undef, 'dependency' ) for (
             grep { defined }
             map { /depst\.prereq\b[\s:=-]+(.+?)\s*$/; $1 || undef }
             grep { /depst\.prereq/ } <$content>
@@ -292,7 +323,7 @@ sub _action {
             ) or die "Failed to execute $file\n";
 
             chomp($out);
-            return ($err) ? 0 : $out if ($quiet_verify_or_redeploy);
+            return ($err) ? 0 : $out if ($run_quiet);
 
             die "$err\n" if ($err);
             print '', ( ($out) ? 'ok' : 'not ok' ) . " - verify: $action\n";
@@ -325,7 +356,8 @@ depst COMMAND [DIR || NAME]
     depst rm DIR          # remove a directory from depst tracking list
     depst make NAME       # create a named template set (set of 3 files)
     depst list [NAME]     # dump a list of the template set (set of 3 files)
-    depst status [DIR]    # check status of all tracked or specific directory
+    depst status          # check status of tracked directories
+    depst diff [NAME]     # display a diff of any modified actions
     depst clean           # reset depst state to match current files/directories
     depst preinstall      # set depst state so an "update" will deploy everything
 
@@ -417,11 +449,10 @@ out the relative paths of the 3 files, so you can do stuff like:
 If not provided a name of an action, it will list all tracked directories and
 every action within each directory.
 
-=head2 status [DIR]
+=head2 status
 
 This command will tell you your current state compared to what the current code
-says your state should be. For example, if you called status with no optional
-directory parameter, you might see something like this:
+says your state should be. For example, you might see something like this:
 
     diff - db
       + db/new_function
@@ -434,10 +465,15 @@ yet been deployed (marked with a "+"), features that have been deployed in your
 current system state but are missing from the code (marked with a "-"), and
 changes to previously existing files (marked with an "M").
 
-If you want, you can provide a specific directory to status, and it'll only
-report on the directory.
+=head2 diff
 
-    depst status db
+This will display a diff delta of the differences of any modified action files.
+You can specify an optional name parameter that refers to a tracking directory,
+action name, or specific sub-action.
+
+    depst diff
+    depst diff db/schema
+    depst diff db/schema/deploy
 
 =head2 clean
 

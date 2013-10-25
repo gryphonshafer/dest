@@ -12,3 +12,8 @@ Revision history for App::Depst
         Fixed to bug where "add" results in a pre-deployed state
         Pre-deployed state error reporting improved
         Added helper commands: rm, revdeploy
+
+1.04    Fri Oct 25 14:09:36 PDT 2013
+        Added "diff" action
+        "status" action improvements
+        Fixed some minors bugs here and there

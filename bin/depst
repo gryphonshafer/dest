@@ -6,7 +6,7 @@ use Pod::Usage 'pod2usage';
 use App::Depst;
 
 my @commands = qw(
-    init add rm make list status clean preinstall
+    init add rm make list status diff clean preinstall
     deploy redeploy revdeploy verify revert update
     man
 );
@@ -38,7 +38,8 @@ depst COMMAND [DIR || NAME]
     depst rm DIR          # remove a directory from depst tracking list
     depst make NAME       # create a named template set (set of 3 files)
     depst list [NAME]     # dump a list of the template set (set of 3 files)
-    depst status [DIR]    # check status of all tracked or specific directory
+    depst status          # check status of tracked directories
+    depst diff [NAME]     # display a diff of any modified actions
     depst clean           # reset depst state to match current files/directories
     depst preinstall      # set depst state so an "update" will deploy everything
 
@@ -130,11 +131,10 @@ out the relative paths of the 3 files, so you can do stuff like:
 If not provided a name of an action, it will list all tracked directories and
 every action within each directory.
 
-=head2 status [DIR]
+=head2 status
 
 This command will tell you your current state compared to what the current code
-says your state should be. For example, if you called status with no optional
-directory parameter, you might see something like this:
+says your state should be. For example, you might see something like this:
 
     diff - db
       + db/new_function
@@ -147,10 +147,15 @@ yet been deployed (marked with a "+"), features that have been deployed in your
 current system state but are missing from the code (marked with a "-"), and
 changes to previously existing files (marked with an "M").
 
-If you want, you can provide a specific directory to status, and it'll only
-report on the directory.
+=head2 diff
 
-    depst status db
+This will display a diff delta of the differences of any modified action files.
+You can specify an optional name parameter that refers to a tracking directory,
+action name, or specific sub-action.
+
+    depst diff
+    depst diff db/schema
+    depst diff db/schema/deploy
 
 =head2 clean
 
