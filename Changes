@@ -17,3 +17,6 @@ Revision history for App::Depst
         Added "diff" action
         "status" action improvements
         Fixed some minors bugs here and there
+
+1.05    Mon Nov  4 14:01:28 PST 2013
+        Fixed dependency error

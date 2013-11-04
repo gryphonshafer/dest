@@ -10,7 +10,7 @@ use File::Path qw( mkpath rmtree );
 use IPC::Run 'run';
 use Text::Diff ();
 
-our $VERSION = '1.04';
+our $VERSION = '1.05';
 
 sub init {
     die "Project already initialized\n" if ( -d '.depst' );

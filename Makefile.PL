@@ -18,6 +18,7 @@ WriteMakefile(
         'File::Path'            => 0,
         'IPC::Run'              => 0,
         'Test::More'            => 0,
+        'Text::Diff'            => 0,
     },
     dist  => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean => { FILES => 'App-Depst-*' },
