@@ -1,4 +1,4 @@
-package App::Depst;
+package App::Dest;
 use strict;
 use warnings;
 
@@ -10,12 +10,12 @@ use File::Path qw( mkpath rmtree );
 use IPC::Run 'run';
 use Text::Diff ();
 
-our $VERSION = '1.05';
+our $VERSION = '1.06';
 
 sub init {
-    die "Project already initialized\n" if ( -d '.depst' );
-    mkdir('.depst') or die "Unable to create .depst directory\n";
-    open( my $watch, '>', '.depst/watch' ) or die "Unable to create .depst/watch file\n";
+    die "Project already initialized\n" if ( -d '.dest' );
+    mkdir('.dest') or die "Unable to create .dest directory\n";
+    open( my $watch, '>', '.dest/watch' ) or die "Unable to create .dest/watch file\n";
     return 0;
 }
 
@@ -23,15 +23,15 @@ sub add {
     my ( $self, $dir ) = @_;
     $dir =~ s|/$||;
 
-    die "Not in project root directory or project not initialized\n" unless ( -d '.depst' );
-    die "No directory specified; usage: depst add [directory]\n" unless ($dir);
+    die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
+    die "No directory specified; usage: dest add [directory]\n" unless ($dir);
     die "Directory specified does not exist\n" unless ( -d $dir );
     die "Directory $dir already added\n" if ( grep { $dir eq $_ } $self->_watches() );
 
-    open( my $watch, '>>', '.depst/watch' ) or die "Unable to write .depst/watch file\n";
+    open( my $watch, '>>', '.dest/watch' ) or die "Unable to write .dest/watch file\n";
     print $watch $dir, "\n";
 
-    mkpath(".depst/$dir");
+    mkpath(".dest/$dir");
     return 0;
 }
 
@@ -39,21 +39,21 @@ sub rm {
     my ( $self, $dir ) = @_;
     $dir =~ s|/$||;
 
-    die "Not in project root directory or project not initialized\n" unless ( -d '.depst' );
-    die "No directory specified; usage: depst add [directory]\n" unless ($dir);
+    die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
+    die "No directory specified; usage: dest add [directory]\n" unless ($dir);
     die "Directory $dir not currently tracked\n" unless ( grep { $dir eq $_ } $self->_watches() );
 
     my @watches = $self->_watches();
-    open( my $watch, '>', '.depst/watch' ) or die "Unable to write .depst/watch file\n";
+    open( my $watch, '>', '.dest/watch' ) or die "Unable to write .dest/watch file\n";
     print $watch $_, "\n" for ( grep { $_ ne $dir } @watches );
 
-    rmtree(".depst/$dir");
+    rmtree(".dest/$dir");
     return 0;
 }
 
 sub make {
     my ( $self, $path ) = @_;
-    die "No name specified; usage: depst make [path]\n" unless ($path);
+    die "No name specified; usage: dest make [path]\n" unless ($path);
 
     eval {
         mkpath($path);
@@ -96,15 +96,15 @@ sub list {
 sub status {
     my ($self) = @_;
 
-    die "Not in project root directory or project not initialized\n" unless ( -d '.depst' );
+    die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
 
     my %seen_actions;
     for ( $self->_watches() ) {
         my ( $this_path, $printed_path ) = ( $_, 0 );
 
-        eval { File::DirCompare->compare( ".depst/$_", $_, sub {
+        eval { File::DirCompare->compare( ".dest/$_", $_, sub {
             my ( $a, $b ) = @_;
-            return if ( $a and $a =~ /\/depst.wrap$/ or $b and $b =~ /\/depst.wrap$/ );
+            return if ( $a and $a =~ /\/dest.wrap$/ or $b and $b =~ /\/dest.wrap$/ );
             print 'diff - ', $this_path, "\n" unless ( $printed_path++ );
 
             if ( not $b ) {
@@ -141,9 +141,9 @@ sub diff {
         return 0;
     }
 
-    eval { File::DirCompare->compare( ".depst/$path", $path, sub {
+    eval { File::DirCompare->compare( ".dest/$path", $path, sub {
         my ( $a, $b ) = @_;
-        return if ( $a and $a =~ /\/depst.wrap$/ or $b and $b =~ /\/depst.wrap$/ );
+        return if ( $a and $a =~ /\/dest.wrap$/ or $b and $b =~ /\/dest.wrap$/ );
         print Text::Diff::diff( $a, $b );
         return;
     } ) };
@@ -154,14 +154,14 @@ sub diff {
 sub update {
     my ($self) = @_;
 
-    die "Not in project root directory or project not initialized\n" unless ( -d '.depst' );
+    die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
 
-    File::DirCompare->compare( ".depst/$_", $_, sub {
+    File::DirCompare->compare( ".dest/$_", $_, sub {
         my ( $a, $b ) = @_;
-        return if ( $a and $a =~ /\/depst.wrap$/ or $b and $b =~ /\/depst.wrap$/ );
+        return if ( $a and $a =~ /\/dest.wrap$/ or $b and $b =~ /\/dest.wrap$/ );
 
         if ( not $b ) {
-            $a =~ s|\.depst/||;
+            $a =~ s|\.dest/||;
             $self->revert($a);
         }
         elsif ( not $a ) {
@@ -169,7 +169,7 @@ sub update {
         }
         else {
 
-            $a =~ s|\.depst/||;
+            $a =~ s|\.dest/||;
             $a =~ s|/(\w+)$||;
             $b =~ s|/(\w+)$||;
 
@@ -180,7 +180,7 @@ sub update {
                 $self->deploy($b);
             }
             else {
-                $self->dircopy( $a, ".depst/$a" );
+                $self->dircopy( $a, ".dest/$a" );
             }
         }
     } ) for ( $self->_watches() );
@@ -190,26 +190,26 @@ sub update {
 
 sub verify {
     my ( $self, $path ) = @_;
-    die "Not in project root directory or project not initialized\n" unless ( -d '.depst' );
+    die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
     return $self->_action( $path, 'verify' );
 }
 
 sub deploy {
     my ( $self, $name, $redeploy ) = @_;
-    die "File to deploy required; usage: depst deploy file\n" unless ($name);
-    die "Not in project root directory or project not initialized\n" unless ( -d '.depst' );
+    die "File to deploy required; usage: dest deploy file\n" unless ($name);
+    die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
     my $rv = $self->_action( $name, 'deploy', $redeploy );
     $self->verify($name);
-    dircopy( $name, ".depst/$name" );
+    dircopy( $name, ".dest/$name" );
     return $rv;
 }
 
 sub revert {
     my ( $self, $name ) = @_;
-    die "File to revert required; usage: depst revert file\n" unless ($name);
-    die "Not in project root directory or project not initialized\n" unless ( -d '.depst' );
-    my $rv = $self->_action( ".depst/$name", 'revert' );
-    rmtree(".depst/$name");
+    die "File to revert required; usage: dest revert file\n" unless ($name);
+    die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
+    my $rv = $self->_action( ".dest/$name", 'revert' );
+    rmtree(".dest/$name");
     return $rv;
 }
 
@@ -226,26 +226,26 @@ sub revdeploy {
 
 sub clean {
     my ($self) = @_;
-    die "Not in project root directory or project not initialized\n" unless ( -d '.depst' );
+    die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
     for ( $self->_watches() ) {
-        rmtree(".depst/$_");
-        dircopy( $_, ".depst/$_" );
+        rmtree(".dest/$_");
+        dircopy( $_, ".dest/$_" );
     }
     return 0;
 }
 
 sub preinstall {
     my ($self) = @_;
-    die "Not in project root directory or project not initialized\n" unless ( -d '.depst' );
+    die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
     for ( $self->_watches() ) {
-        rmtree(".depst/$_");
-        mkdir(".depst/$_");
+        rmtree(".dest/$_");
+        mkdir(".dest/$_");
     }
     return 0;
 }
 
 sub _watches {
-    open( my $watch, '<', '.depst/watch' ) or die "Unable to read .depst/watch file\n";
+    open( my $watch, '<', '.dest/watch' ) or die "Unable to read .dest/watch file\n";
     return map { chomp; $_ } <$watch>;
 }
 
@@ -281,10 +281,10 @@ sub _action {
 
         my @nodes = split( '/', $file );
         my $type = pop @nodes;
-        ( my $action = join( '/', @nodes ) ) =~ s|^\.depst/||;
+        ( my $action = join( '/', @nodes ) ) =~ s|^\.dest/||;
 
         if (
-            ( $type eq 'deploy' and not $run_quiet and -f '.depst/' . $file ) or
+            ( $type eq 'deploy' and not $run_quiet and -f '.dest/' . $file ) or
             ( $type eq 'revert' and not -f $file )
         ) {
             if ( $is_dependency ) {
@@ -299,16 +299,16 @@ sub _action {
 
         $self->_execute( "$_/$type", undef, 'dependency' ) for (
             grep { defined }
-            map { /depst\.prereq\b[\s:=-]+(.+?)\s*$/; $1 || undef }
-            grep { /depst\.prereq/ } <$content>
+            map { /dest\.prereq\b[\s:=-]+(.+?)\s*$/; $1 || undef }
+            grep { /dest\.prereq/ } <$content>
         );
 
         my $wrap;
-        shift @nodes if ( $nodes[0] eq '.depst' );
+        shift @nodes if ( $nodes[0] eq '.dest' );
         while (@nodes) {
             my $path = join( '/', @nodes );
-            if ( -f "$path/depst.wrap" ) {
-                $wrap = "$path/depst.wrap";
+            if ( -f "$path/dest.wrap" ) {
+                $wrap = "$path/dest.wrap";
                 last;
             }
             pop @nodes;
@@ -331,7 +331,7 @@ sub _action {
         else {
             print "begin - $type: $action\n";
             run( [ grep { defined } ( ($wrap) ? $wrap : undef ), $file ] ) or die "Failed to execute $file\n";
-            $file =~ s|^\.depst/||;
+            $file =~ s|^\.dest/||;
             print "ok - $type: $action\n";
         }
 
@@ -345,38 +345,39 @@ __END__
 
 =head1 NAME
 
-depst - Deployment State Manager
+dest - Deployment State Manager
 
 =head1 SYNOPSIS
 
-depst COMMAND [DIR || NAME]
+dest COMMAND [DIR || NAME]
 
-    depst init            # initialize depst for a project
-    depst add DIR         # add a directory to depst tracking list
-    depst rm DIR          # remove a directory from depst tracking list
-    depst make NAME       # create a named template set (set of 3 files)
-    depst list [NAME]     # dump a list of the template set (set of 3 files)
-    depst status          # check status of tracked directories
-    depst diff [NAME]     # display a diff of any modified actions
-    depst clean           # reset depst state to match current files/directories
-    depst preinstall      # set depst state so an "update" will deploy everything
+    dest init            # initialize dest for a project
+    dest add DIR         # add a directory to dest tracking list
+    dest rm DIR          # remove a directory from dest tracking list
+    dest make NAME       # create a named template set (set of 3 files)
+    dest list [NAME]     # dump a list of the template set (set of 3 files)
+    dest status          # check status of tracked directories
+    dest diff [NAME]     # display a diff of any modified actions
+    dest clean           # reset dest state to match current files/directories
+    dest preinstall      # set dest state so an "update" will deploy everything
 
-    depst deploy NAME     # deployment of a specific action
-    depst verify [NAME]   # verification of tracked actions or specific action
-    depst revert NAME     # revertion of a specific action
-    depst redeploy NAME   # deployment of a specific action
-    depst revdeploy NAME  # revert and deployment of a specific action
-    depst update          # automaticall deploy or revert to cause currency
+    dest deploy NAME     # deployment of a specific action
+    dest verify [NAME]   # verification of tracked actions or specific action
+    dest revert NAME     # revertion of a specific action
+    dest redeploy NAME   # deployment of a specific action
+    dest revdeploy NAME  # revert and deployment of a specific action
+    dest update          # automaticall deploy or revert to cause currency
 
-    depst help            # display command synposis
-    depst man             # display man page
+    dest help            # display command synposis
+    dest man             # display man page
 
 =head1 DESCRIPTION
 
-depst is a simple "deployment state" change management tool. I really like
-what Sqitch is doing, but I wanted something that worked on more than just
-databases. And I'm not very smart, so I wanted something really simple.
-(Both simple to use and simple to maintain.) Thus, depst was born.
+dest is a simple "deployment state" change management tool. Inspired by
+what Sqitch does for databases, it provides a simple mechanism for writing
+deploy, verify, and revert parts of a change action. The typical use of
+dest is in a development context because it allows for simplified state
+changes when switching between branches (as an example).
 
 Let's say you're working with a group of other software engineers on a
 particular software project using your favorite revision control system.
@@ -386,35 +387,39 @@ installation of libraries or other applications. Then let's also say the team
 braches, works on stuff, shares those branches, reverts, merges, etc. And also
 from time to time you want to go back in time a bit so you can reproduce a bug.
 Maintaining the database state and the state of the system across all that
-activity can be problematic. depst tries to solve this in a very simple way,
+activity can be problematic. dest tries to solve this in a very simple way,
 letting you be able to deploy, revert, and verify to any point in time in
 the development history.
 
+Using dest for production deployment, provisioning, or configuration management
+is not advised. Use something like Angular et al instead. Angular (or whatever
+CM tool you prefer) can use dest to perform some actions.
+
 =head1 COMMANDS
 
-Typing just C<depst> should bring up the usage instructions, which include a
-command list. In nearly all cases, depst assumes you are calling depst from
+Typing just C<dest> should bring up the usage instructions, which include a
+command list. In nearly all cases, dest assumes you are calling dest from
 the root directory of your project. If not, it will complain.
 
 =head2 init
 
-To start using depst, you need to initialize your project by calling C<init>
+To start using dest, you need to initialize your project by calling C<init>
 while in the root directory of your project. (If you are in a different
-directory, depst will assume that is your project's root directory.)
+directory, dest will assume that is your project's root directory.)
 
-The initialization will result in a C<.depst> directory being created.
-You'll almost certainly want to add ".depst" to your .gitignore file or
+The initialization will result in a C<.dest> directory being created.
+You'll almost certainly want to add ".dest" to your .gitignore file or
 whatever.
 
 =head2 add DIR
 
-Once a project has been initialized, you need to tell depst what directories
+Once a project has been initialized, you need to tell dest what directories
 you want to "track". Into these tracked directories you'll place subdirectories
 with recognizable names, and into each subdirectory a set of 3 files: deploy,
 revert, and verify.
 
 For example, let's say you have a database. So you create C<db> in your
-project's root directory. Then call C<depst add db> from your root directory.
+project's root directory. Then call C<dest add db> from your root directory.
 Inside C<db>, you might create the directory C<db/schema>. And under that
 directory, add the files: deploy, revert, and verify.
 
@@ -424,7 +429,7 @@ the verify file let's you verify the deploy file worked.
 
 =head2 rm DIR
 
-This removes a directory from the depst tracking list.
+This removes a directory from the dest tracking list.
 
 =head2 make NAME
 
@@ -432,19 +437,19 @@ This is a helper command. Given a directory you've already added, it will create
 the subdirectory and deploy, revert, and verify files.
 
     # given db, creates db/schema and the 3 files
-    depst make db/schema
+    dest make db/schema
 
 As a nice helper bit, C<make> will list the relative paths of the 3 new files.
 So if you want, you can do something like this:
 
-    vi `depst make db/schema`
+    vi `dest make db/schema`
 
 =head2 list [NAME]
 
 If provided a name of an action, it does the last step of C<make>. It lists
 out the relative paths of the 3 files, so you can do stuff like:
 
-    vi `depst list db/schema`
+    vi `dest list db/schema`
 
 If not provided a name of an action, it will list all tracked directories and
 every action within each directory.
@@ -460,7 +465,7 @@ says your state should be. For example, you might see something like this:
       M db/schema/deploy
     ok - etc
 
-depst will report for each tracked directory what are new changes that haven't
+dest will report for each tracked directory what are new changes that haven't
 yet been deployed (marked with a "+"), features that have been deployed in your
 current system state but are missing from the code (marked with a "-"), and
 changes to previously existing files (marked with an "M").
@@ -471,15 +476,15 @@ This will display a diff delta of the differences of any modified action files.
 You can specify an optional name parameter that refers to a tracking directory,
 action name, or specific sub-action.
 
-    depst diff
-    depst diff db/schema
-    depst diff db/schema/deploy
+    dest diff
+    dest diff db/schema
+    dest diff db/schema/deploy
 
 =head2 clean
 
-Let's say that for some reason you have a delta between what depst thinks your
+Let's say that for some reason you have a delta between what dest thinks your
 system is and what your code says it ought to be, and you really believe your
-code is right. You can call C<clean> to tell depst to just assume that what
+code is right. You can call C<clean> to tell dest to just assume that what
 the code says is right.
 
 =head2 preinstall
@@ -487,25 +492,25 @@ the code says is right.
 Let's say you're setting up a new system or installing the project/application,
 so you start by creating yourself a working directory. At some point, you'll
 want to deploy all the deploy actions. You'll need to C<init> and C<add> the
-directories/paths you need. But depst will have a cache that matches the
+directories/paths you need. But dest will have a cache that matches the
 current working directory. At this point, you need to C<preinstall> to remove
 that cache and be in a state where you can C<update>.
 
 Here's an example of what you might want:
 
-    depst init
-    depst add path_to/stuff
-    depst add path_to/other_stuff
-    depst preinstall
-    depst update
+    dest init
+    dest add path_to/stuff
+    dest add path_to/other_stuff
+    dest preinstall
+    dest update
 
 =head2 deploy NAME
 
-This tells depst to deploy a specific action. For example, if you called
+This tells dest to deploy a specific action. For example, if you called
 C<status> and got back results like in the status example above, you might then
 want to:
 
-    depst deploy db/new_function
+    dest deploy db/new_function
 
 Note that you shouldn't add "/deploy" to the end of that. Also note that a
 C<deploy> call will automatically call C<verify> when complete.
@@ -517,15 +522,15 @@ provided, all actions under directories that are tracked.
 
 Unlike deploy and revert files, which can run the user through all sorts of
 user input/output, verify files must return some value that is either true
-or false. depst will assume that if it sees a true value, verification is
+or false. dest will assume that if it sees a true value, verification is
 confirmed. If it receives a false value, verification is assumed to have failed.
 
 =head2 revert NAME
 
-This tells depst to revert a specific action. For example, if you deployed
+This tells dest to revert a specific action. For example, if you deployed
 C<db/new_function> but then you wanted to revert it, you'd:
 
-    depst revert db/new_function
+    dest revert db/new_function
 
 =head2 redeploy NAME
 
@@ -558,7 +563,7 @@ Displays a synposis of commands and their usage.
 
 =head2 man
 
-Displays the man page for depst.
+Displays the man page for dest.
 
 =head1 DEPENDENCIES
 
@@ -566,27 +571,27 @@ Sometimes you may have deployments (or revertions) that have dependencies on
 other deployments (or revertions). For example, if you want to add a column
 to a table in a database, that table (and the database) have to exist already.
 
-To define a dependency, place the action's name after a C<depst.prereq> marker,
+To define a dependency, place the action's name after a C<dest.prereq> marker,
 which itself likely will be after a comment. (The comment marker can be
 whatever the language of the deployment file is.) For example, in a SQL file
 that adds a column, you might have:
 
-    -- depst.prereq: db/schema
+    -- dest.prereq: db/schema
 
 =head1 WRAPPERS
 
-Unless a "wrapper" is used (and thus, by default), depst will assume that the
+Unless a "wrapper" is used (and thus, by default), dest will assume that the
 action files (those 3 files under each action name) are self-contained
 executable files. Often if not almost always the action sub-files would be a
 lot simpler and contain less code duplication if they were executed through
 some sort of wrapper.
 
 Given our database example, we'd likely want each of the action sub-files to be
-pure SQL. In that case, we'll need to write some wrapper program that depst
+pure SQL. In that case, we'll need to write some wrapper program that dest
 will run that will then consume and run the SQL files as appropriate.
 
-depst looks for wrapper files up the chain from the location of the action file.
-Specifically, it'll assume a file is a wrapper if the filename is "depst.wrap".
+dest looks for wrapper files up the chain from the location of the action file.
+Specifically, it'll assume a file is a wrapper if the filename is "dest.wrap".
 If such a file is found, then that file is called, and the name of the action
 sub-file is passed as its only argument.
 
@@ -602,14 +607,14 @@ Let's then also say that the C<example/ls/deploy> file contains:
 
     ls
 
-I could create a deployment file C<example/depst.wrap> that looked like this:
+I could create a deployment file C<example/dest.wrap> that looked like this:
 
     #!/bin/bash
     /bin/bash "$1"
 
 Wrappers will only ever be run from the current code. For example, if you have
 a revert file for some action and you checkout your working directory to a
-point in time prior to the revert file existing, depst maintains a copy of the
+point in time prior to the revert file existing, dest maintains a copy of the
 original revert file so it can revert the action. However, it will always rely
 on whatever wrapper is in the current working directory.
 

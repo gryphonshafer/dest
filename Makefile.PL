@@ -3,12 +3,12 @@ use warnings;
 use ExtUtils::MakeMaker;
 
 WriteMakefile(
-    NAME             => 'App::Depst',
+    NAME             => 'App::Dest',
     AUTHOR           => q{Gryphon Shafer <gryphon@cpan.org>},
-    VERSION_FROM     => 'lib/App/Depst.pm',
+    VERSION_FROM     => 'lib/App/Dest.pm',
     LICENSE          => 'perl',
-    EXE_FILES        => ['bin/depst'],
-    MAN1PODS         => { 'bin/depst' => '$(INST_MAN1DIR)/depst.1' },
+    EXE_FILES        => ['bin/dest'],
+    MAN1PODS         => { 'bin/dest' => '$(INST_MAN1DIR)/dest.1' },
     MIN_PERL_VERSION => '5.10.1',
     PREREQ_PM        => {
         'File::Basename'        => 0,
@@ -21,6 +21,6 @@ WriteMakefile(
         'Text::Diff'            => 0,
     },
     dist  => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
-    clean => { FILES => 'App-Depst-*' },
+    clean => { FILES => 'App-Dest-*' },
     ( $ExtUtils::MakeMaker::VERSION >= 6.3002 ? ('LICENSE'=> 'perl') : () ),
 );

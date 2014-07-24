@@ -1,4 +1,4 @@
-Revision history for App::Depst
+Revision history for App::Dest
 
 1.01    Fri Aug 30 10:27:20 PDT 2013
         First version, released on an unsuspecting world.
@@ -20,3 +20,6 @@ Revision history for App::Depst
 
 1.05    Mon Nov  4 14:01:28 PST 2013
         Fixed dependency error
+
+1.06    Thu Jul 24 15:59:31 PDT 2014
+        Changed the name of project so people can pronounce it easier

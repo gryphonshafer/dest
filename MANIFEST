@@ -2,11 +2,11 @@ Changes
 MANIFEST
 Makefile.PL
 README
-lib/App/Depst.pm
+lib/App/Dest.pm
 t/00-load.t
 t/boilerplate.t
 t/library.t
 t/manifest.t
 t/pod-coverage.t
 t/pod.t
-bin/depst
+bin/dest

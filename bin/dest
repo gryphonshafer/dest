@@ -1,0 +1,32 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+
+use Pod::Usage 'pod2usage';
+use App::Dest;
+
+my @commands = qw(
+    init add rm make list status diff clean preinstall
+    deploy redeploy revdeploy verify revert update
+    man
+);
+
+my ( $command, @args ) = @ARGV;
+$command = lc( $command || 'undef' );
+
+my @command = grep { index( $_, $command ) == 0 } @commands;
+($command) = @command;
+
+sub usage {
+    pod2usage(
+        '-exitval'  => 1,
+        '-verbose'  => $_[0],
+        '-input'    => 'App/Dest.pm',
+        '-pathlist' => \@INC,
+    );
+}
+
+usage(1) if ( not @command or @command > 1 );
+usage(2) if ( $command eq 'man' );
+
+exit App::Dest->$command(@args);

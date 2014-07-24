@@ -2,7 +2,7 @@
 use Test::More tests => 1;
 
 BEGIN {
-    use_ok( 'App::Depst' ) || print "Bail out!\n";
+    use_ok( 'App::Dest' ) || print "Bail out!\n";
 }
 
-diag( "Testing App::Depst $App::Depst::VERSION, Perl $], $^X" );
+diag( "Testing App::Dest $App::Dest::VERSION, Perl $], $^X" );
