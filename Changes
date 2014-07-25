@@ -23,3 +23,6 @@ Revision history for App::Dest
 
 1.06    Thu Jul 24 15:59:31 PDT 2014
         Changed the name of project so people can pronounce it easier
+
+1.07    Fri Jul 25 11:22:14 PDT 2014
+        Update can now be limited by specifying a target directory set

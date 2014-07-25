@@ -10,7 +10,7 @@ use File::Path qw( mkpath rmtree );
 use IPC::Run 'run';
 use Text::Diff ();
 
-our $VERSION = '1.06';
+our $VERSION = '1.07';
 
 sub init {
     die "Project already initialized\n" if ( -d '.dest' );
@@ -152,7 +152,8 @@ sub diff {
 }
 
 sub update {
-    my ($self) = @_;
+    my $self  = shift;
+    my @paths = @_;
 
     die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
 
@@ -183,7 +184,12 @@ sub update {
                 $self->dircopy( $a, ".dest/$a" );
             }
         }
-    } ) for ( $self->_watches() );
+    } ) for (
+        grep {
+            my $watch = $_;
+            grep { $_ eq $watch } @paths;
+        } $self->_watches()
+    );
 
     return 0;
 }
@@ -366,7 +372,7 @@ dest COMMAND [DIR || NAME]
     dest revert NAME     # revertion of a specific action
     dest redeploy NAME   # deployment of a specific action
     dest revdeploy NAME  # revert and deployment of a specific action
-    dest update          # automaticall deploy or revert to cause currency
+    dest update [DIRS]   # automaticall deploy or revert to cause currency
 
     dest help            # display command synposis
     dest man             # display man page
@@ -543,7 +549,7 @@ shouldn't.
 This is exactly the same as conducting a revert of an action followed by a
 deploy of the same action.
 
-=head2 update
+=head2 update [DIRS]
 
 This will automatically deploy or revert as appropriate to make your system
 match the code. This will likely be the most common command you run.
@@ -556,6 +562,13 @@ If there are actions that are in the code that have been deployed, but the
 "deploy" file has changed, then C<update> will revert the previously deployed
 "deploy" file then deploy the new "deploy" file. (And note that the deployment
 will automatically call C<verify>.)
+
+You can optionally add one or more directories to the end of the update command
+to restrict the update to only operate within the directories you specify.
+This will not prevent cross-directory dependencies, however. For example, if
+you have two tracked directories and limit the update to only one directory and
+within the directory there is an action with a dependency on an action in the
+non-specificied directory, that action will be triggered.
 
 =head2 help
 
