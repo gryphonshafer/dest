@@ -1,4 +1,4 @@
-# dest - Deployment State Manager
+﻿# dest - Deployment State Manager
 
 dest is a simple "deployment state" change management tool. Inspired by
 what Sqitch does for databases, it provides a simple mechanism for writing
@@ -6,8 +6,8 @@ deploy, verify, and revert parts of a change action. The typical use of
 dest is in a development context because it allows for simplified state
 changes when switching between branches (as an example).
 
-[![Build Status](https://travis-ci.org/gryphonshafer/App-Dest.svg)](https://travis-ci.org/gryphonshafer/App-Dest)
-[![Coverage Status](https://coveralls.io/repos/gryphonshafer/App-Dest/badge.png)](https://coveralls.io/r/gryphonshafer/App-Dest)
+[![Build Status](https://travis-ci.org/gryphonshafer/dest.svg)](https://travis-ci.org/gryphonshafer/dest)
+[![Coverage Status](https://coveralls.io/repos/gryphonshafer/dest/badge.png)](https://coveralls.io/r/gryphonshafer/dest)
 
 Let's say you're working with a group of other software engineers on a
 particular software project using your favorite revision control system.
