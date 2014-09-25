@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More;
+use Test::Most;
 use Cwd 'getcwd';
 use File::Path qw( mkpath rmtree );
 

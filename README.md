@@ -1,10 +1,13 @@
-dest - Deployment State Manager
+# dest - Deployment State Manager
 
 dest is a simple "deployment state" change management tool. Inspired by
 what Sqitch does for databases, it provides a simple mechanism for writing
 deploy, verify, and revert parts of a change action. The typical use of
 dest is in a development context because it allows for simplified state
 changes when switching between branches (as an example).
+
+[![Build Status](https://travis-ci.org/gryphonshafer/App-Dest.svg)](https://travis-ci.org/gryphonshafer/App-Dest)
+[![Coverage Status](https://coveralls.io/repos/gryphonshafer/App-Dest/badge.png)](https://coveralls.io/r/gryphonshafer/App-Dest)
 
 Let's say you're working with a group of other software engineers on a
 particular software project using your favorite revision control system.
@@ -22,8 +25,7 @@ Using dest for production deployment, provisioning, or configuration management
 is not advised. Use something like Angular et al instead. Angular (or whatever
 CM tool you prefer) can use dest to perform some actions.
 
-
-INSTALLATION
+## Installation
 
 To install this module, run the following commands:
 
@@ -32,8 +34,7 @@ To install this module, run the following commands:
     make test
     make install
 
-
-SUPPORT AND DOCUMENTATION
+## Support and Documentation
 
 After installing, you can find documentation for this module with the
 perldoc command.
@@ -43,11 +44,16 @@ perldoc command.
     man dest
     perldoc App::Dest
 
+You can also look for information at:
 
-AUTHOR AND LICENSE
+- [GitHub](https://github.com/gryphonshafer/App-Dest "GitHub")
+- [AnnoCPAN](http://annocpan.org/dist/App-Dest "AnnoCPAN")
+- [CPAN Ratings](http://cpanratings.perl.org/m/App-Dest "CPAN Ratings")
+- [Search CPAN](http://search.cpan.org/dist/App-Dest "Search CPAN")
 
-Gryphon Shafer, gryphon@cpan.org
+## Author and License
+
+Gryphon Shafer, [gryphon@cpan.org](mailto:gryphon@cpan.org "Email Gryphon Shafer")
 
 This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself, either Perl version 5.8.4 or,
-at your option, any later version of Perl 5 you may have available.
+it under the same terms as Perl itself.

@@ -1,8 +1,6 @@
-#!/usr/bin/env perl -T
-use Test::More tests => 1;
+#!/usr/bin/env perl
+use Test::Most;
 
-BEGIN {
-    use_ok( 'App::Dest' ) || print "Bail out!\n";
-}
-
+BEGIN { use_ok('App::Dest') }
 diag( "Testing App::Dest $App::Dest::VERSION, Perl $], $^X" );
+done_testing();

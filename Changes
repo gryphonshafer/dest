@@ -26,3 +26,6 @@ Revision history for App::Dest
 
 1.07    Fri Jul 25 11:22:14 PDT 2014
         Update can now be limited by specifying a target directory set
+
+1.08    Thu Sep 25 09:35:22 PDT 2014
+        Some OCD, and added TravisCI and Coveralls.

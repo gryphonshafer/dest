@@ -10,7 +10,7 @@ use File::Path qw( mkpath rmtree );
 use IPC::Run 'run';
 use Text::Diff ();
 
-our $VERSION = '1.07';
+our $VERSION = '1.08';
 
 sub init {
     die "Project already initialized\n" if ( -d '.dest' );
@@ -346,7 +346,7 @@ sub _action {
 }
 
 1;
-__END__
+
 =pod
 
 =head1 NAME
@@ -644,7 +644,6 @@ Gryphon Shafer E<lt>gryphon@cpan.orgE<gt>.
 =head1 LICENSE
 
 This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself, either Perl version 5.8.4 or,
-at your option, any later version of Perl 5 you may have available.
+it under the same terms as Perl itself.
 
 =cut
