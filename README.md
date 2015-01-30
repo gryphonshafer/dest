@@ -11,7 +11,7 @@ version 1.08
 
 # SYNOPSIS
 
-    dest COMMAND [DIR || NAME]
+dest COMMAND \[DIR || NAME\]
 
     dest init            # initialize dest for a project
     dest add DIR         # add a directory to dest tracking list
