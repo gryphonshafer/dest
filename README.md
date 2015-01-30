@@ -4,7 +4,7 @@ App::Dest - Deployment State Manager
 
 # VERSION
 
-version 1.08
+version 1.09
 
 [![Build Status](https://travis-ci.org/gryphonshafer/App-Dest.svg)](https://travis-ci.org/gryphonshafer/App-Dest)
 [![Coverage Status](https://coveralls.io/repos/gryphonshafer/App-Dest/badge.png)](https://coveralls.io/r/gryphonshafer/App-Dest)
