@@ -2,6 +2,10 @@
 use strict;
 use warnings;
 
+# PODNAME: dest
+# ABSTRACT: Deployment State Manager
+# VERSION
+
 use Pod::Usage 'pod2usage';
 use App::Dest;
 

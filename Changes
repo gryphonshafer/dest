@@ -1,31 +1,34 @@
 Revision history for App::Dest
 
-1.01    Fri Aug 30 10:27:20 PDT 2013
-        First version, released on an unsuspecting world.
+{{$NEXT}}
+        - Implementing use of Dist::Zilla.
 
-1.02    Fri Sep  6 14:09:05 PDT 2013
-        Added the redeploy feature
-        Expanded list functionality to include list all actions
-        Fixed preinstall and dependency trees for deploy and revert
+1.08      Thu Sep 25 09:35:22 PDT 2014
+        - Some OCD, and added TravisCI and Coveralls.
 
-1.03    Wed Oct  2 12:38:51 PDT 2013
-        Fixed to bug where "add" results in a pre-deployed state
-        Pre-deployed state error reporting improved
-        Added helper commands: rm, revdeploy
+1.07      Fri Jul 25 11:22:14 PDT 2014
+        - Update can now be limited by specifying a target directory set
 
-1.04    Fri Oct 25 14:09:36 PDT 2013
-        Added "diff" action
-        "status" action improvements
-        Fixed some minors bugs here and there
+1.06      Thu Jul 24 15:59:31 PDT 2014
+        - Changed the name of project so people can pronounce it easier
 
-1.05    Mon Nov  4 14:01:28 PST 2013
-        Fixed dependency error
+1.05      Mon Nov  4 14:01:28 PST 2013
+        - Fixed dependency error
 
-1.06    Thu Jul 24 15:59:31 PDT 2014
-        Changed the name of project so people can pronounce it easier
+1.04      Fri Oct 25 14:09:36 PDT 2013
+        - Added "diff" action
+        - "status" action improvements
+        - Fixed some minors bugs here and there
 
-1.07    Fri Jul 25 11:22:14 PDT 2014
-        Update can now be limited by specifying a target directory set
+1.03      Wed Oct  2 12:38:51 PDT 2013
+        - Fixed to bug where "add" results in a pre-deployed state
+        - Pre-deployed state error reporting improved
+        - Added helper commands: rm, revdeploy
 
-1.08    Thu Sep 25 09:35:22 PDT 2014
-        Some OCD, and added TravisCI and Coveralls.
+1.02      Fri Sep  6 14:09:05 PDT 2013
+        - Added the redeploy feature
+        - Expanded list functionality to include list all actions
+        - Fixed preinstall and dependency trees for deploy and revert
+
+1.01      Fri Aug 30 10:27:20 PDT 2013
+        - First version, released on an unsuspecting world.

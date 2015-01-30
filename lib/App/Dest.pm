@@ -1,4 +1,6 @@
 package App::Dest;
+# ABSTRACT: Deployment State Manager
+
 use strict;
 use warnings;
 
@@ -10,7 +12,7 @@ use File::Path qw( mkpath rmtree );
 use IPC::Run 'run';
 use Text::Diff ();
 
-our $VERSION = '1.08';
+# VERSION
 
 sub init {
     die "Project already initialized\n" if ( -d '.dest' );
@@ -114,7 +116,7 @@ sub status {
                 print "  + $b\n";
             }
             else {
-                ( my $action = $b ) =~ s\/(?:deploy|verify|revert)$\\;
+                ( my $action = $b ) =~ s,/(?:deploy|verify|revert)$,,;
                 print "  $action\n" unless ( $seen_actions{$action}++ );
                 print "    M $b\n";
             }
@@ -346,12 +348,19 @@ sub _action {
 }
 
 1;
+__END__
 
 =pod
 
-=head1 NAME
+=begin :badges
 
-dest - Deployment State Manager
+=for markdown
+[![Build Status](https://travis-ci.org/gryphonshafer/App-Dest.svg)](https://travis-ci.org/gryphonshafer/App-Dest)
+[![Coverage Status](https://coveralls.io/repos/gryphonshafer/App-Dest/badge.png)](https://coveralls.io/r/gryphonshafer/App-Dest)
+
+=end :badges
+
+=for test_synopsis BEGIN { die "SKIP: skip synopsis check because it's non-Perl\n"; }
 
 =head1 SYNOPSIS
 
@@ -635,15 +644,14 @@ on whatever wrapper is in the current working directory.
 
 L<App::Sqitch>.
 
-=head1 AUTHOR
+You can also look for additional information at:
 
-Gryphon Shafer E<lt>gryphon@cpan.orgE<gt>.
-
-  code('Perl') || die;
-
-=head1 LICENSE
-
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
+=for :list
+* L<GitHub|https://github.com/gryphonshafer/App-Dest>
+* L<CPAN|http://search.cpan.org/dist/App-Dest>
+* L<MetaCPAN|https://metacpan.org/pod/App::Dest>
+* L<AnnoCPAN|http://annocpan.org/dist/App-Dest>
+* L<Travis CI|https://travis-ci.org/gryphonshafer/App-Dest>
+* L<Coveralls|https://coveralls.io/r/gryphonshafer/App-Dest>
 
 =cut
