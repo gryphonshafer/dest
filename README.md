@@ -4,10 +4,10 @@ App::Dest - Deployment State Manager
 
 # VERSION
 
-version 1.09
+version 1.10
 
-[![Build Status](https://travis-ci.org/gryphonshafer/App-Dest.svg)](https://travis-ci.org/gryphonshafer/App-Dest)
-[![Coverage Status](https://coveralls.io/repos/gryphonshafer/App-Dest/badge.png)](https://coveralls.io/r/gryphonshafer/App-Dest)
+[![Build Status](https://travis-ci.org/gryphonshafer/dest.svg)](https://travis-ci.org/gryphonshafer/dest)
+[![Coverage Status](https://coveralls.io/repos/gryphonshafer/dest/badge.png)](https://coveralls.io/r/gryphonshafer/dest)
 
 # SYNOPSIS
 
@@ -293,12 +293,12 @@ on whatever wrapper is in the current working directory.
 
 You can also look for additional information at:
 
-- [GitHub](https://github.com/gryphonshafer/App-Dest)
+- [GitHub](https://github.com/gryphonshafer/dest)
 - [CPAN](http://search.cpan.org/dist/App-Dest)
 - [MetaCPAN](https://metacpan.org/pod/App::Dest)
 - [AnnoCPAN](http://annocpan.org/dist/App-Dest)
-- [Travis CI](https://travis-ci.org/gryphonshafer/App-Dest)
-- [Coveralls](https://coveralls.io/r/gryphonshafer/App-Dest)
+- [Travis CI](https://travis-ci.org/gryphonshafer/dest)
+- [Coveralls](https://coveralls.io/r/gryphonshafer/dest)
 
 # AUTHOR
 

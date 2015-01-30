@@ -355,8 +355,8 @@ __END__
 =begin :badges
 
 =for markdown
-[![Build Status](https://travis-ci.org/gryphonshafer/App-Dest.svg)](https://travis-ci.org/gryphonshafer/App-Dest)
-[![Coverage Status](https://coveralls.io/repos/gryphonshafer/App-Dest/badge.png)](https://coveralls.io/r/gryphonshafer/App-Dest)
+[![Build Status](https://travis-ci.org/gryphonshafer/dest.svg)](https://travis-ci.org/gryphonshafer/dest)
+[![Coverage Status](https://coveralls.io/repos/gryphonshafer/dest/badge.png)](https://coveralls.io/r/gryphonshafer/dest)
 
 =end :badges
 
@@ -647,11 +647,11 @@ L<App::Sqitch>.
 You can also look for additional information at:
 
 =for :list
-* L<GitHub|https://github.com/gryphonshafer/App-Dest>
+* L<GitHub|https://github.com/gryphonshafer/dest>
 * L<CPAN|http://search.cpan.org/dist/App-Dest>
 * L<MetaCPAN|https://metacpan.org/pod/App::Dest>
 * L<AnnoCPAN|http://annocpan.org/dist/App-Dest>
-* L<Travis CI|https://travis-ci.org/gryphonshafer/App-Dest>
-* L<Coveralls|https://coveralls.io/r/gryphonshafer/App-Dest>
+* L<Travis CI|https://travis-ci.org/gryphonshafer/dest>
+* L<Coveralls|https://coveralls.io/r/gryphonshafer/dest>
 
 =cut
