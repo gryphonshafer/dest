@@ -653,5 +653,7 @@ You can also look for additional information at:
 * L<AnnoCPAN|http://annocpan.org/dist/App-Dest>
 * L<Travis CI|https://travis-ci.org/gryphonshafer/dest>
 * L<Coveralls|https://coveralls.io/r/gryphonshafer/dest>
+* L<CPANTS|http://cpants.cpanauthors.org/dist/App-Dest>
+* L<CPAN Testers|http://www.cpantesters.org/distro/A/App-Dest.html>
 
 =cut
