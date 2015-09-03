@@ -6,7 +6,6 @@ use Cwd 'getcwd';
 use File::Path qw( mkpath rmtree );
 
 use constant MODULE => 'App::Dest';
-
 exit main(@ARGV);
 
 my ( $buffer_handle, $buffer );
@@ -19,7 +18,6 @@ sub main {
     chdir('/tmp/dest_testing');
 
     test_basics();
-
     done_testing();
 
     chdir($pwd);
@@ -28,7 +26,6 @@ sub main {
 }
 
 sub test_basics {
-
     eval{ App::Dest->init };
     ok( !$@, 'init()' );
 

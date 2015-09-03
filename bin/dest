@@ -12,7 +12,7 @@ use App::Dest;
 my @commands = qw(
     init add rm make list status diff clean preinstall
     deploy redeploy revdeploy verify revert update
-    man
+    man version
 );
 
 my ( $command, @args ) = @ARGV;
@@ -32,5 +32,10 @@ sub usage {
 
 usage(1) if ( not @command or @command > 1 );
 usage(2) if ( $command eq 'man' );
+
+if ( $command eq 'version' ) {
+    print $App::Dest::VERSION, "\n";
+    exit;
+}
 
 exit App::Dest->$command(@args);

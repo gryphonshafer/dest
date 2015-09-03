@@ -155,9 +155,18 @@ sub diff {
 
 sub update {
     my $self  = shift;
-    my @paths = @_;
 
     die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
+
+    my @paths   = @_;
+    my @watches = $self->_watches;
+
+    if (@paths) {
+        @watches = grep {
+            my $watch = $_;
+            grep { $_ eq $watch } @paths;
+        } @watches;
+    }
 
     File::DirCompare->compare( ".dest/$_", $_, sub {
         my ( $a, $b ) = @_;
@@ -186,12 +195,7 @@ sub update {
                 $self->dircopy( $a, ".dest/$a" );
             }
         }
-    } ) for (
-        grep {
-            my $watch = $_;
-            grep { $_ eq $watch } @paths;
-        } $self->_watches()
-    );
+    } ) for (@watches);
 
     return 0;
 }
@@ -383,6 +387,7 @@ dest COMMAND [DIR || NAME]
     dest revdeploy NAME  # revert and deployment of a specific action
     dest update [DIRS]   # automaticall deploy or revert to cause currency
 
+    dest version         # dest current version
     dest help            # display command synposis
     dest man             # display man page
 
@@ -578,6 +583,10 @@ This will not prevent cross-directory dependencies, however. For example, if
 you have two tracked directories and limit the update to only one directory and
 within the directory there is an action with a dependency on an action in the
 non-specificied directory, that action will be triggered.
+
+=head2 version
+
+Displays the current dest version.
 
 =head2 help
 

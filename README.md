@@ -4,7 +4,7 @@ App::Dest - Deployment State Manager
 
 # VERSION
 
-version 1.10
+version 1.11
 
 [![Build Status](https://travis-ci.org/gryphonshafer/dest.svg)](https://travis-ci.org/gryphonshafer/dest)
 [![Coverage Status](https://coveralls.io/repos/gryphonshafer/dest/badge.png)](https://coveralls.io/r/gryphonshafer/dest)
@@ -30,6 +30,7 @@ dest COMMAND \[DIR || NAME\]
     dest revdeploy NAME  # revert and deployment of a specific action
     dest update [DIRS]   # automaticall deploy or revert to cause currency
 
+    dest version         # dest current version
     dest help            # display command synposis
     dest man             # display man page
 
@@ -226,6 +227,10 @@ you have two tracked directories and limit the update to only one directory and
 within the directory there is an action with a dependency on an action in the
 non-specificied directory, that action will be triggered.
 
+## version
+
+Displays the current dest version.
+
 ## help
 
 Displays a synposis of commands and their usage.
@@ -299,10 +304,12 @@ You can also look for additional information at:
 - [AnnoCPAN](http://annocpan.org/dist/App-Dest)
 - [Travis CI](https://travis-ci.org/gryphonshafer/dest)
 - [Coveralls](https://coveralls.io/r/gryphonshafer/dest)
+- [CPANTS](http://cpants.cpanauthors.org/dist/App-Dest)
+- [CPAN Testers](http://www.cpantesters.org/distro/A/App-Dest.html)
 
 # AUTHOR
 
-Gryphon Shafer <gryphon@cpan.org>
+Gryphon Shafer &lt;gryphon@cpan.org>
 
 # COPYRIGHT AND LICENSE
 
