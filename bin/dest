@@ -12,7 +12,7 @@ use App::Dest;
 my @commands = qw(
     init add rm make list status diff clean preinstall
     deploy redeploy revdeploy verify revert update
-    man version
+    man version watches
 );
 
 my ( $command, @args ) = @ARGV;

@@ -21,6 +21,7 @@ my %WriteMakefileArgs = (
   "NAME" => "App::Dest",
   "PREREQ_PM" => {
     "File::Basename" => 0,
+    "File::Copy" => 0,
     "File::Copy::Recursive" => 0,
     "File::DirCompare" => 0,
     "File::Find" => 0,
@@ -41,7 +42,7 @@ my %WriteMakefileArgs = (
     "blib" => "1.01",
     "constant" => 0
   },
-  "VERSION" => "1.11",
+  "VERSION" => "1.12",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -51,6 +52,7 @@ my %WriteMakefileArgs = (
 my %FallbackPrereqs = (
   "Cwd" => 0,
   "File::Basename" => 0,
+  "File::Copy" => 0,
   "File::Copy::Recursive" => 0,
   "File::DirCompare" => 0,
   "File::Find" => 0,

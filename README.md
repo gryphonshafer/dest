@@ -4,7 +4,7 @@ App::Dest - Deployment State Manager
 
 # VERSION
 
-version 1.11
+version 1.12
 
 [![Build Status](https://travis-ci.org/gryphonshafer/dest.svg)](https://travis-ci.org/gryphonshafer/dest)
 [![Coverage Status](https://coveralls.io/repos/gryphonshafer/dest/badge.png)](https://coveralls.io/r/gryphonshafer/dest)
@@ -17,6 +17,7 @@ dest COMMAND \[DIR || NAME\]
     dest add DIR         # add a directory to dest tracking list
     dest rm DIR          # remove a directory from dest tracking list
     dest make NAME       # create a named template set (set of 3 files)
+    dest watches         # returns a list of watched directories
     dest list [NAME]     # dump a list of the template set (set of 3 files)
     dest status          # check status of tracked directories
     dest diff [NAME]     # display a diff of any modified actions
@@ -106,6 +107,10 @@ As a nice helper bit, `make` will list the relative paths of the 3 new files.
 So if you want, you can do something like this:
 
     vi `dest make db/schema`
+
+## watches
+
+Returns a list of tracked or watched directories.
 
 ## list \[NAME\]
 
@@ -291,6 +296,26 @@ a revert file for some action and you checkout your working directory to a
 point in time prior to the revert file existing, dest maintains a copy of the
 original revert file so it can revert the action. However, it will always rely
 on whatever wrapper is in the current working directory.
+
+# WATCH FILE
+
+Optionally, you can elect to use a watch file that can be committed to your
+favorite revision control system. In the root dirctory of your project, create
+a filed called "dest.watch" and list therein the directores (relative to the
+root directory of the project) to watch.
+
+If this "dest.watch" file exists in the root directory of your project, dest
+will add the following behavior:
+
+During an "init" action, the dest.watch file will be read to setup all watched
+directories (as though you manually called the "add" action on each).
+
+During a "status" action, dest will report any differences between your current
+watch list and the dest.watch file.
+
+During an "update" action, dest will automatically add (as if you manually
+called the "add" action) each directory in the dest.watch file that is
+currently not watched by dest prior to executing the update action.
 
 # SEE ALSO
 

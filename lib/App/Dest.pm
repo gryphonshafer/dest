@@ -5,6 +5,7 @@ use strict;
 use warnings;
 
 use File::Basename qw( dirname basename );
+use File::Copy 'copy';
 use File::Copy::Recursive 'dircopy';
 use File::DirCompare ();
 use File::Find 'find';
@@ -18,6 +19,12 @@ sub init {
     die "Project already initialized\n" if ( -d '.dest' );
     mkdir('.dest') or die "Unable to create .dest directory\n";
     open( my $watch, '>', '.dest/watch' ) or die "Unable to create .dest/watch file\n";
+    if ( -f 'dest.watch' ) {
+        copy( 'dest.watch', '.dest/watch' );
+        warn
+            "Created new watch list based on dest.watch file:\n" .
+            join( "\n", map { '  ' . $_ } _watches() ) . "\n";
+    }
     return 0;
 }
 
@@ -28,7 +35,7 @@ sub add {
     die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
     die "No directory specified; usage: dest add [directory]\n" unless ($dir);
     die "Directory specified does not exist\n" unless ( -d $dir );
-    die "Directory $dir already added\n" if ( grep { $dir eq $_ } $self->_watches() );
+    die "Directory $dir already added\n" if ( grep { $dir eq $_ } $self->_watches );
 
     open( my $watch, '>>', '.dest/watch' ) or die "Unable to write .dest/watch file\n";
     print $watch $dir, "\n";
@@ -43,9 +50,9 @@ sub rm {
 
     die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
     die "No directory specified; usage: dest add [directory]\n" unless ($dir);
-    die "Directory $dir not currently tracked\n" unless ( grep { $dir eq $_ } $self->_watches() );
+    die "Directory $dir not currently tracked\n" unless ( grep { $dir eq $_ } $self->_watches );
 
-    my @watches = $self->_watches();
+    my @watches = $self->_watches;
     open( my $watch, '>', '.dest/watch' ) or die "Unable to write .dest/watch file\n";
     print $watch $_, "\n" for ( grep { $_ ne $dir } @watches );
 
@@ -77,7 +84,7 @@ sub list {
         print join( ' ', map { "$path/$_" } qw( deploy verify revert ) ), "\n";
     }
     else {
-        for my $path ( $self->_watches() ) {
+        for my $path ( $self->_watches ) {
             print $path, "\n";
 
             find( {
@@ -100,8 +107,13 @@ sub status {
 
     die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
 
+    if ( -f 'dest.watch' ) {
+        my $diff = Text::Diff::diff( '.dest/watch', 'dest.watch' );
+        warn "Diff between current watch list and dest.watch file:\n" . $diff if ($diff);
+    }
+
     my %seen_actions;
-    for ( $self->_watches() ) {
+    for ( $self->_watches ) {
         my ( $this_path, $printed_path ) = ( $_, 0 );
 
         eval { File::DirCompare->compare( ".dest/$_", $_, sub {
@@ -139,13 +151,16 @@ sub diff {
     my ( $self, $path ) = @_;
 
     if ( not defined $path ) {
-        $self->diff($_) for ( $self->_watches() );
+        $self->diff($_) for ( $self->_watches );
         return 0;
     }
 
     eval { File::DirCompare->compare( ".dest/$path", $path, sub {
         my ( $a, $b ) = @_;
-        return if ( $a and $a =~ /\/dest.wrap$/ or $b and $b =~ /\/dest.wrap$/ );
+        $a ||= '';
+        $b ||= '';
+
+        return if ( $a =~ /\/dest.wrap$/ or $b =~ /\/dest.wrap$/ );
         print Text::Diff::diff( $a, $b );
         return;
     } ) };
@@ -157,6 +172,18 @@ sub update {
     my $self  = shift;
 
     die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
+
+    if ( -f 'dest.watch' ) {
+        my @watches = $self->_watches;
+        open( my $watch, '<', 'dest.watch' ) or die "Unable to read dest.watch file\n";
+
+        for my $candidate ( map { chomp; $_ } <$watch> ) {
+            unless ( grep { $_ eq $candidate } @watches ) {
+                $self->add($candidate);
+                warn "Added $candidate to the watch list\n";
+            }
+        }
+    }
 
     my @paths   = @_;
     my @watches = $self->_watches;
@@ -239,7 +266,7 @@ sub revdeploy {
 sub clean {
     my ($self) = @_;
     die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
-    for ( $self->_watches() ) {
+    for ( $self->_watches ) {
         rmtree(".dest/$_");
         dircopy( $_, ".dest/$_" );
     }
@@ -249,16 +276,22 @@ sub clean {
 sub preinstall {
     my ($self) = @_;
     die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
-    for ( $self->_watches() ) {
+    for ( $self->_watches ) {
         rmtree(".dest/$_");
         mkdir(".dest/$_");
     }
     return 0;
 }
 
+sub watches {
+    my ($self) = @_;
+    print join( "\n", $self->_watches ), "\n";
+    return 0;
+}
+
 sub _watches {
     open( my $watch, '<', '.dest/watch' ) or die "Unable to read .dest/watch file\n";
-    return map { chomp; $_ } <$watch>;
+    return sort { $a cmp $b } map { chomp; $_ } <$watch>;
 }
 
 sub _action {
@@ -279,7 +312,7 @@ sub _action {
                 return unless ( /\/$type$/ );
                 $self->_execute($_) or die "Failed to $type $_\n";
             },
-        }, $self->_watches() );
+        }, $self->_watches );
     }
 
     return 0;
@@ -374,6 +407,7 @@ dest COMMAND [DIR || NAME]
     dest add DIR         # add a directory to dest tracking list
     dest rm DIR          # remove a directory from dest tracking list
     dest make NAME       # create a named template set (set of 3 files)
+    dest watches         # returns a list of watched directories
     dest list [NAME]     # dump a list of the template set (set of 3 files)
     dest status          # check status of tracked directories
     dest diff [NAME]     # display a diff of any modified actions
@@ -463,6 +497,10 @@ As a nice helper bit, C<make> will list the relative paths of the 3 new files.
 So if you want, you can do something like this:
 
     vi `dest make db/schema`
+
+=head2 watches
+
+Returns a list of tracked or watched directories.
 
 =head2 list [NAME]
 
@@ -648,6 +686,26 @@ a revert file for some action and you checkout your working directory to a
 point in time prior to the revert file existing, dest maintains a copy of the
 original revert file so it can revert the action. However, it will always rely
 on whatever wrapper is in the current working directory.
+
+=head1 WATCH FILE
+
+Optionally, you can elect to use a watch file that can be committed to your
+favorite revision control system. In the root dirctory of your project, create
+a filed called "dest.watch" and list therein the directores (relative to the
+root directory of the project) to watch.
+
+If this "dest.watch" file exists in the root directory of your project, dest
+will add the following behavior:
+
+During an "init" action, the dest.watch file will be read to setup all watched
+directories (as though you manually called the "add" action on each).
+
+During a "status" action, dest will report any differences between your current
+watch list and the dest.watch file.
+
+During an "update" action, dest will automatically add (as if you manually
+called the "add" action) each directory in the dest.watch file that is
+currently not watched by dest prior to executing the update action.
 
 =head1 SEE ALSO
 
