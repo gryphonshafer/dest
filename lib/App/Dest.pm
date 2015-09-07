@@ -5,25 +5,47 @@ use strict;
 use warnings;
 
 use File::Basename qw( dirname basename );
-use File::Copy 'copy';
 use File::Copy::Recursive 'dircopy';
 use File::DirCompare ();
 use File::Find 'find';
 use File::Path qw( mkpath rmtree );
 use IPC::Run 'run';
 use Text::Diff ();
+use Try::Tiny qw( try catch );
+
 
 # VERSION
 
 sub init {
+    my ($self) = @_;
+
     die "Project already initialized\n" if ( -d '.dest' );
     mkdir('.dest') or die "Unable to create .dest directory\n";
     open( my $watch, '>', '.dest/watch' ) or die "Unable to create .dest/watch file\n";
+
     if ( -f 'dest.watch' ) {
-        copy( 'dest.watch', '.dest/watch' );
+        open( my $watches, '<', 'dest.watch' ) or die "Unable to read dest.watch file\n";
+
+        my @watches = map { chomp; $_ } <$watches>;
+
+        my @errors;
+        for my $watch (@watches) {
+            try {
+                $self->add($watch);
+            }
+            catch {
+                push( @errors, $watch . ': ' . $_ );
+            };
+        }
+
         warn
             "Created new watch list based on dest.watch file:\n" .
-            join( "\n", map { '  ' . $_ } _watches() ) . "\n";
+            join( "\n", map { '  ' . $_ } @watches ) . "\n" .
+            (
+                (@errors)
+                    ? "With the following errors:\n" . join( "\n", map { '  ' . $_ } @errors )
+                    : ''
+            );
     }
     return 0;
 }

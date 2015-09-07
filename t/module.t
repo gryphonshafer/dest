@@ -28,6 +28,7 @@ sub main {
     status();
     clean();
     diff();
+    update();
 
     chdir($pwd);
     rmtree(DIR);
@@ -58,6 +59,35 @@ sub init {
 
     ok( -d DIR . '/.dest', 'init() += directory' );
     ok( -f DIR . '/.dest/watch', 'init() += watch file' );
+
+    rmtree( DIR . '/.dest' );
+
+    my @dirs = qw( a b c );
+    if ( open( my $dest_watch, '>', 'dest.watch' ) ) {
+        for (@dirs) {
+            mkpath( DIR . '/' . $_ );
+            print $dest_watch $_, "\n";
+        }
+
+        my $null;
+        open( my $stderr, '>&STDERR' );
+        close STDERR;
+        open( STDERR, '>', \$null );
+
+        eval{ MODULE->init };
+
+        close STDERR;
+        open( STDERR, '>&SAVEERR' );
+
+        ok( !$@, 'init with dest.watch' );
+
+        ok( -d DIR . '/.dest', 'init() += directory with dest.watch' );
+        ok( -f DIR . '/.dest/watch', 'init() += watch file with dest.watch' );
+    }
+
+    rmtree( DIR . '/.dest' );
+    unlink('dest.watch');
+    eval{ MODULE->init };
 }
 
 sub add {
@@ -128,5 +158,13 @@ sub diff {
     eval{ MODULE->diff };
     my $diff = _return();
     ok( !$@, 'diff' );
-    ok( $diff eq undef );
+    ok( ! defined $diff, 'diff returns undef' );
+}
+
+sub update {
+    _capture();
+    eval{ MODULE->update };
+    my $update = _return();
+    ok( !$@, 'update' );
+    ok( ! defined $update, 'update returns undef' );
 }
