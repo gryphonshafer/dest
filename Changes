@@ -1,6 +1,8 @@
 Revision history for App::Dest
 
 {{$NEXT}}
+
+1.13      2015-09-06 21:00:46-07:00 America/Los_Angeles
         - Bug fix for dest.watch adding files to watch list
 
 1.12      2015-09-04 17:23:55-07:00 America/Los_Angeles
