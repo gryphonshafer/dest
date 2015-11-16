@@ -13,7 +13,6 @@ use IPC::Run 'run';
 use Text::Diff ();
 use Try::Tiny qw( try catch );
 
-
 # VERSION
 
 sub init {
@@ -83,13 +82,14 @@ sub rm {
 }
 
 sub make {
-    my ( $self, $path ) = @_;
+    my ( $self, $path, $ext ) = @_;
     die "No name specified; usage: dest make [path]\n" unless ($path);
+    $ext = '.' . $ext if ($ext);
 
     eval {
         mkpath($path);
         for ( qw( deploy verify revert ) ) {
-            open( my $file, '>', "$path/$_" ) or die;
+            open( my $file, '>', "$path/$_$ext" ) or die;
             print $file "\n";
         }
     };
@@ -103,7 +103,7 @@ sub list {
     my ( $self, $path ) = @_;
 
     if ($path) {
-        print join( ' ', map { "$path/$_" } qw( deploy verify revert ) ), "\n";
+        print join( ' ', map { <"$path/$_*"> } qw( deploy verify revert ) ), "\n";
     }
     else {
         for my $path ( $self->_watches ) {
@@ -113,8 +113,8 @@ sub list {
                 follow   => 1,
                 no_chdir => 1,
                 wanted   => sub {
-                    return unless ( m|/deploy$| );
-                    ( my $action = $_ ) =~ s|/deploy$||;
+                    return unless ( m|/deploy(?:\.[^\/]+)?| );
+                    ( my $action = $_ ) =~ s|/deploy(?:\.[^\/]+)?||;
                     print '  ', $action, "\n";
                 },
             }, $path );
@@ -320,11 +320,14 @@ sub _action {
     my ( $self, $path, $type, $redeploy ) = @_;
 
     if ($path) {
-        unless ( -f "$path/$type" ) {
+        my @files = <"$path/$type*">;
+        my $file  = $files[0];
+
+        unless ($file) {
             my $this_file = substr( $path, 7 );
             die "Unable to $type $this_file (perhaps action has already occured)\n";
         }
-        $self->_execute( "$path/$type", $redeploy ) or die "Failed to $type $path\n";
+        $self->_execute( $file, $redeploy ) or die "Failed to $type $path\n";
     }
     else {
         find( {
@@ -428,7 +431,7 @@ dest COMMAND [DIR || NAME]
     dest init            # initialize dest for a project
     dest add DIR         # add a directory to dest tracking list
     dest rm DIR          # remove a directory from dest tracking list
-    dest make NAME       # create a named template set (set of 3 files)
+    dest make NAME [EXT] # create a named template set (set of 3 files)
     dest watches         # returns a list of watched directories
     dest list [NAME]     # dump a list of the template set (set of 3 files)
     dest status          # check status of tracked directories
@@ -507,7 +510,7 @@ the verify file let's you verify the deploy file worked.
 
 This removes a directory from the dest tracking list.
 
-=head2 make NAME
+=head2 make NAME [EXT]
 
 This is a helper command. Given a directory you've already added, it will create
 the subdirectory and deploy, revert, and verify files.
@@ -519,6 +522,14 @@ As a nice helper bit, C<make> will list the relative paths of the 3 new files.
 So if you want, you can do something like this:
 
     vi `dest make db/schema`
+
+Optionally, you can specify an extention for the created files. For example:
+
+    vi `dest make db/schema sql`
+    # this will create and open in vi:
+    #    db/schema/deploy.sql
+    #    db/schema/revert.sql
+    #    db/schema/verify.sql
 
 =head2 watches
 
