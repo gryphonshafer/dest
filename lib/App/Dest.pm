@@ -499,16 +499,16 @@ particular software project using your favorite revision control system.
 Let's also say that you have a database that undergoes schema changes as
 features are developed, and you have various system activities like the
 installation of libraries or other applications. Then let's also say the team
-braches, works on stuff, shares those branches, reverts, merges, etc. And also
+branches, works on stuff, shares those branches, reverts, merges, etc. And also
 from time to time you want to go back in time a bit so you can reproduce a bug.
 Maintaining the database state and the state of the system across all that
 activity can be problematic. dest tries to solve this in a very simple way,
 letting you be able to deploy, revert, and verify to any point in time in
 the development history.
 
-Using dest for production deployment, provisioning, or configuration management
-is not advised. Use something like Angular et al instead. Angular (or whatever
-CM tool you prefer) can use dest to perform some actions.
+Note that using dest for production deployment, provisioning, or configuration
+management is not advised. Use a full-featured configuration management tool
+instead.
 
 =head1 COMMANDS
 
@@ -523,8 +523,8 @@ while in the root directory of your project. (If you are in a different
 directory, dest will assume that is your project's root directory.)
 
 The initialization will result in a C<.dest> directory being created.
-You'll almost certainly want to add ".dest" to your .gitignore file or
-whatever.
+You'll almost certainly want to add ".dest" to your `.gitignore` file or
+similar revision control ignore file.
 
 =head2 add DIR
 
