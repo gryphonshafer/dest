@@ -1,9 +1,10 @@
 Revision history for App::Dest
 
 {{$NEXT}}
-        - Require Perl 5.16 minimum version
         - Action scripts can have extensions
         - Loads of test coverage improvments, up to >80% now
+        - Require Perl 5.16 minimum version
+        - No longer need to be in project root dir to run dest
 
 1.13      2015-09-06 21:00:46-07:00 America/Los_Angeles
         - Bug fix for dest.watch adding files to watch list

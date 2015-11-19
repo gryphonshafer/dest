@@ -5,6 +5,7 @@ use strict;
 use warnings;
 use 5.016;
 
+use Cwd 'getcwd';
 use File::Basename qw( dirname basename );
 use File::Copy::Recursive 'dircopy';
 use File::DirCompare ();
@@ -57,7 +58,7 @@ sub add {
     $dir //= '';
     $dir =~ s|/$||;
 
-    die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
+    _find_root_dir();
     die "No directory specified; usage: dest add [directory]\n" unless ($dir);
     die "Directory specified does not exist\n" unless ( -d $dir );
     die "Directory $dir already added\n" if ( grep { $dir eq $_ } $self->_watches );
@@ -133,8 +134,7 @@ sub list {
 
 sub status {
     my ($self) = @_;
-
-    die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
+    _find_root_dir();
 
     if ( -f 'dest.watch' ) {
         my $diff = Text::Diff::diff( '.dest/watch', 'dest.watch' );
@@ -198,9 +198,8 @@ sub diff {
 }
 
 sub update {
-    my $self  = shift;
-
-    die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
+    my $self = shift;
+    _find_root_dir();
 
     if ( -f 'dest.watch' ) {
         my @watches = $self->_watches;
@@ -258,14 +257,14 @@ sub update {
 
 sub verify {
     my ( $self, $path ) = @_;
-    die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
+    _find_root_dir();
     return $self->_action( $path, 'verify' );
 }
 
 sub deploy {
     my ( $self, $name, $redeploy ) = @_;
     die "File to deploy required; usage: dest deploy file\n" unless ($name);
-    die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
+    _find_root_dir();
     my $rv = $self->_action( $name, 'deploy', $redeploy );
     dircopy( $_, ".dest/$_" ) for ( grep { s|/deploy[^/]*$|| } keys %seen_files );
     return $rv;
@@ -274,7 +273,7 @@ sub deploy {
 sub revert {
     my ( $self, $name ) = @_;
     die "File to revert required; usage: dest revert file\n" unless ($name);
-    die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
+    _find_root_dir();
     my $rv = $self->_action( ".dest/$name", 'revert' );
     rmtree(".dest/$_") for ( map { s|^.dest/||; $_ } grep { s|/revert[^/]*$|| } keys %seen_files );
     return $rv;
@@ -293,7 +292,7 @@ sub revdeploy {
 
 sub clean {
     my ($self) = @_;
-    die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
+    _find_root_dir();
     for ( $self->_watches ) {
         rmtree(".dest/$_");
         dircopy( $_, ".dest/$_" );
@@ -303,7 +302,7 @@ sub clean {
 
 sub preinstall {
     my ($self) = @_;
-    die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
+    _find_root_dir();
     for ( $self->_watches ) {
         rmtree(".dest/$_");
         mkdir(".dest/$_");
@@ -315,6 +314,14 @@ sub watches {
     my ($self) = @_;
     print join( "\n", $self->_watches ), "\n";
     return 0;
+}
+
+sub _find_root_dir {
+    while ( getcwd() ne '/' ) {
+        return if ( -d '.dest' );
+        chdir('..');
+    }
+    die "Failed to find project root dir; run init in project root dir to resolve\n";
 }
 
 sub _watches {
