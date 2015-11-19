@@ -379,6 +379,7 @@ sub _execute {
         grep { /dest\.prereq/ } <$content>
     ) {
         my @files = <"$_/$type*">;
+        die "Unable to find prereq \"$_/$type*\"\n" unless ( $files[0] );
         $self->_execute( $files[0], $run_quiet, 'dependency' ) if (
             ( $type eq 'deploy' and not -f '.dest/' . $files[0] ) or
             ( $type eq 'revert' and -f '.dest/' . $files[0] )
