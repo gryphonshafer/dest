@@ -3,6 +3,7 @@ package App::Dest;
 
 use strict;
 use warnings;
+use 5.016;
 
 use File::Basename qw( dirname basename );
 use File::Copy::Recursive 'dircopy';
