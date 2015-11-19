@@ -235,7 +235,6 @@ sub update {
             $self->deploy($b);
         }
         else {
-
             $a =~ s|\.dest/||;
             $a =~ s|/(\w+)$||;
             $b =~ s|/(\w+)$||;
@@ -388,7 +387,7 @@ sub _execute {
     ) {
         my @files = <"$_/$type*">;
         die "Unable to find prereq \"$_/$type*\"\n" unless ( $files[0] );
-        $self->_execute( $files[0], $run_quiet, 'dependency' ) if (
+        $self->_execute( $files[0], $run_quiet, 'dependency' ) or return 0 if (
             ( $type eq 'deploy' and not -f '.dest/' . $files[0] ) or
             ( $type eq 'revert' and -f '.dest/' . $files[0] )
         );
@@ -405,38 +404,41 @@ sub _execute {
         pop @nodes;
     }
 
-    if ( $type eq 'verify' ) {
-        my ( $out, $err );
+    my ( $out, $err );
+    my $run = sub {
+        eval {
+            run(
+                [ grep { defined } ( ($wrap) ? $wrap : undef ), $file ],
+                \undef, \$out, \$err,
+            );
+        };
+        if ( $@ or $err ) {
+            ( my $err_str = $@ || $err ) =~ s/\s*at\s+.*$//;
+            chomp($err_str);
+            die "Failed to execute $file: $err_str\n";
+        }
+    };
 
-        run(
-            [ grep { defined } ( ($wrap) ? $wrap : undef ), $file ],
-            \undef, \$out, \$err,
-        ) or die "Failed to execute $file\n";
+    if ( $type eq 'verify' ) {
+        $run->();
 
         chomp($out);
         return ($err) ? 0 : $out if ($run_quiet);
 
         die "$err\n" if ($err);
         print '', ( ($out) ? 'ok' : 'not ok' ) . " - verify: $action\n";
+        return 0 if ( not $out );
     }
     else {
         print "begin - $type: $action\n";
-
-        eval {
-            run( [ grep { defined } ( ($wrap) ? $wrap : undef ), $file ] );
-        };
-        if ($@) {
-            ( my $err = $@ ) =~ s/\s*at\s+.*$//;
-            chomp($err);
-            die "Failed to execute $file: $err\n";
-        }
+        $run->();
 
         $file =~ s|^\.dest/||;
         print "ok - $type: $action\n";
 
         if ( $type eq 'deploy' ) {
             ( my $verify_file = $file ) =~ s|([^/]+)$| 'verify' . substr( $1, 6 ) |e;
-            $self->_execute($verify_file);
+            return $self->_execute($verify_file);
         }
     }
 
