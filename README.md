@@ -4,7 +4,7 @@ App::Dest - Deployment State Manager
 
 # VERSION
 
-version 1.13
+version 1.14
 
 [![Build Status](https://travis-ci.org/gryphonshafer/dest.svg)](https://travis-ci.org/gryphonshafer/dest)
 [![Coverage Status](https://coveralls.io/repos/gryphonshafer/dest/badge.png)](https://coveralls.io/r/gryphonshafer/dest)
@@ -16,7 +16,7 @@ dest COMMAND \[DIR || NAME\]
     dest init            # initialize dest for a project
     dest add DIR         # add a directory to dest tracking list
     dest rm DIR          # remove a directory from dest tracking list
-    dest make NAME       # create a named template set (set of 3 files)
+    dest make NAME [EXT] # create a named template set (set of 3 files)
     dest watches         # returns a list of watched directories
     dest list [NAME]     # dump a list of the template set (set of 3 files)
     dest status          # check status of tracked directories
@@ -95,7 +95,7 @@ the verify file let's you verify the deploy file worked.
 
 This removes a directory from the dest tracking list.
 
-## make NAME
+## make NAME \[EXT\]
 
 This is a helper command. Given a directory you've already added, it will create
 the subdirectory and deploy, revert, and verify files.
@@ -107,6 +107,14 @@ As a nice helper bit, `make` will list the relative paths of the 3 new files.
 So if you want, you can do something like this:
 
     vi `dest make db/schema`
+
+Optionally, you can specify an extention for the created files. For example:
+
+    vi `dest make db/schema sql`
+    # this will create and open in vi:
+    #    db/schema/deploy.sql
+    #    db/schema/revert.sql
+    #    db/schema/verify.sql
 
 ## watches
 
