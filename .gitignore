@@ -1,6 +1,7 @@
 /blib/
 /.build/
 _build/
+.prove
 cover_db/
 inc/
 Build
@@ -17,4 +18,3 @@ nytprof.out
 /pm_to_blib
 *.o
 *.bs
-dest

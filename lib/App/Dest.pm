@@ -15,6 +15,8 @@ use Try::Tiny qw( try catch );
 
 # VERSION
 
+my %seen_files;
+
 sub init {
     my ($self) = @_;
 
@@ -51,6 +53,7 @@ sub init {
 
 sub add {
     my ( $self, $dir ) = @_;
+    $dir //= '';
     $dir =~ s|/$||;
 
     die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
@@ -67,10 +70,11 @@ sub add {
 
 sub rm {
     my ( $self, $dir ) = @_;
+    $dir //= '';
     $dir =~ s|/$||;
 
     die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
-    die "No directory specified; usage: dest add [directory]\n" unless ($dir);
+    die "No directory specified; usage: dest rm [directory]\n" unless ($dir);
     die "Directory $dir not currently tracked\n" unless ( grep { $dir eq $_ } $self->_watches );
 
     my @watches = $self->_watches;
@@ -84,7 +88,9 @@ sub rm {
 sub make {
     my ( $self, $path, $ext ) = @_;
     die "No name specified; usage: dest make [path]\n" unless ($path);
-    $ext = '.' . $ext if ($ext);
+
+    $ext = '.' . $ext if ( defined $ext );
+    $ext //= '';
 
     eval {
         mkpath($path);
@@ -260,8 +266,7 @@ sub deploy {
     die "File to deploy required; usage: dest deploy file\n" unless ($name);
     die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
     my $rv = $self->_action( $name, 'deploy', $redeploy );
-    $self->verify($name);
-    dircopy( $name, ".dest/$name" );
+    dircopy( $_, ".dest/$_" ) for ( grep { s|/deploy[^/]*$|| } keys %seen_files );
     return $rv;
 }
 
@@ -270,7 +275,7 @@ sub revert {
     die "File to revert required; usage: dest revert file\n" unless ($name);
     die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
     my $rv = $self->_action( ".dest/$name", 'revert' );
-    rmtree(".dest/$name");
+    rmtree(".dest/$_") for ( map { s|^.dest/||; $_ } grep { s|/revert[^/]*$|| } keys %seen_files );
     return $rv;
 }
 
@@ -318,13 +323,14 @@ sub _watches {
 
 sub _action {
     my ( $self, $path, $type, $redeploy ) = @_;
+    %seen_files = ();
 
     if ($path) {
         my @files = <"$path/$type*">;
         my $file  = $files[0];
 
         unless ($file) {
-            my $this_file = substr( $path, 7 );
+            my $this_file = ( split( '/', $path ) )[-1];
             die "Unable to $type $this_file (perhaps action has already occured)\n";
         }
         $self->_execute( $file, $redeploy ) or die "Failed to $type $path\n";
@@ -334,7 +340,7 @@ sub _action {
             follow   => 1,
             no_chdir => 1,
             wanted   => sub {
-                return unless ( /\/$type$/ );
+                return unless ( /\/$type/ );
                 $self->_execute($_) or die "Failed to $type $_\n";
             },
         }, $self->_watches );
@@ -343,70 +349,89 @@ sub _action {
     return 0;
 }
 
-{
-    my %seen_files;
-    sub _execute {
-        my ( $self, $file, $run_quiet, $is_dependency ) = @_;
-        return if ( $seen_files{$file}++ );
+sub _execute {
+    my ( $self, $file, $run_quiet, $is_dependency ) = @_;
+    return if ( $seen_files{$file}++ );
 
-        my @nodes = split( '/', $file );
-        my $type = pop @nodes;
-        ( my $action = join( '/', @nodes ) ) =~ s|^\.dest/||;
+    my @nodes = split( '/', $file );
+    my $type = pop @nodes;
+    ( my $action = join( '/', @nodes ) ) =~ s|^\.dest/||;
 
-        if (
-            ( $type eq 'deploy' and not $run_quiet and -f '.dest/' . $file ) or
-            ( $type eq 'revert' and not -f $file )
-        ) {
-            if ( $is_dependency ) {
-                return;
-            }
-            else {
-                die 'Action already '. $type . "ed\n";
-            }
-        }
+    $type =~ s/\..*$//;
 
-        open( my $content, '<', $file ) or die "Unable to read $file\n";
-
-        $self->_execute( "$_/$type", undef, 'dependency' ) for (
-            grep { defined }
-            map { /dest\.prereq\b[\s:=-]+(.+?)\s*$/; $1 || undef }
-            grep { /dest\.prereq/ } <$content>
-        );
-
-        my $wrap;
-        shift @nodes if ( $nodes[0] eq '.dest' );
-        while (@nodes) {
-            my $path = join( '/', @nodes );
-            if ( -f "$path/dest.wrap" ) {
-                $wrap = "$path/dest.wrap";
-                last;
-            }
-            pop @nodes;
-        }
-
-        if ( $type eq 'verify' ) {
-            my ( $out, $err );
-
-            run(
-                [ grep { defined } ( ($wrap) ? $wrap : undef ), $file ],
-                \undef, \$out, \$err,
-            ) or die "Failed to execute $file\n";
-
-            chomp($out);
-            return ($err) ? 0 : $out if ($run_quiet);
-
-            die "$err\n" if ($err);
-            print '', ( ($out) ? 'ok' : 'not ok' ) . " - verify: $action\n";
+    if (
+        ( $type eq 'deploy' and not $run_quiet and -f '.dest/' . $file ) or
+        ( $type eq 'revert' and not -f $file )
+    ) {
+        if ( $is_dependency ) {
+            return;
         }
         else {
-            print "begin - $type: $action\n";
-            run( [ grep { defined } ( ($wrap) ? $wrap : undef ), $file ] ) or die "Failed to execute $file\n";
-            $file =~ s|^\.dest/||;
-            print "ok - $type: $action\n";
+            die 'Action already '. $type . "ed\n";
+        }
+    }
+
+    open( my $content, '<', $file ) or die "Unable to read $file\n";
+
+    for (
+        grep { defined }
+        map { /dest\.prereq\b[\s:=-]+(.+?)\s*$/; $1 || undef }
+        grep { /dest\.prereq/ } <$content>
+    ) {
+        my @files = <"$_/$type*">;
+        $self->_execute( $files[0], $run_quiet, 'dependency' ) if (
+            ( $type eq 'deploy' and not -f '.dest/' . $files[0] ) or
+            ( $type eq 'revert' and -f '.dest/' . $files[0] )
+        );
+    }
+
+    my $wrap;
+    shift @nodes if ( $nodes[0] eq '.dest' );
+    while (@nodes) {
+        my $path = join( '/', @nodes );
+        if ( -f "$path/dest.wrap" ) {
+            $wrap = "$path/dest.wrap";
+            last;
+        }
+        pop @nodes;
+    }
+
+    if ( $type eq 'verify' ) {
+        my ( $out, $err );
+
+        run(
+            [ grep { defined } ( ($wrap) ? $wrap : undef ), $file ],
+            \undef, \$out, \$err,
+        ) or die "Failed to execute $file\n";
+
+        chomp($out);
+        return ($err) ? 0 : $out if ($run_quiet);
+
+        die "$err\n" if ($err);
+        print '', ( ($out) ? 'ok' : 'not ok' ) . " - verify: $action\n";
+    }
+    else {
+        print "begin - $type: $action\n";
+
+        eval {
+            run( [ grep { defined } ( ($wrap) ? $wrap : undef ), $file ] );
+        };
+        if ($@) {
+            ( my $err = $@ ) =~ s/\s*at\s+.*$//;
+            chomp($err);
+            die "Failed to execute $file: $err\n";
         }
 
-        return 1;
+        $file =~ s|^\.dest/||;
+        print "ok - $type: $action\n";
+
+        if ( $type eq 'deploy' ) {
+            ( my $verify_file = $file ) =~ s|([^/]+)$| 'verify' . substr( $1, 6 ) |e;
+            $self->_execute($verify_file);
+        }
     }
+
+    return 1;
 }
 
 1;
