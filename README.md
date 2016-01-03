@@ -56,7 +56,7 @@ letting you be able to deploy, revert, and verify to any point in time in
 the development history.
 
 Using dest for production deployment, provisioning, or configuration management
-is not advised. Use something like Angular et al instead. Angular (or whatever
+is not advised. Use something like Ansible et al instead. Ansible (or whatever
 CM tool you prefer) can use dest to perform some actions.
 
 # COMMANDS
