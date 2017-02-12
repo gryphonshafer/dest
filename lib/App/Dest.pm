@@ -1,9 +1,9 @@
 package App::Dest;
 # ABSTRACT: Deployment State Manager
 
+use 5.016;
 use strict;
 use warnings;
-use 5.016;
 
 use Cwd 'getcwd';
 use File::Basename qw( dirname basename );
