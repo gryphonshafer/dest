@@ -19,6 +19,7 @@ sub main {
     make();
     list();
     watches();
+    putwatch();
 
     t_teardown();
     done_testing();
@@ -32,7 +33,7 @@ sub add {
 
     ok( !$@, 'add' );
     ok( -d '.dest/atd', 'add() += directory' );
-    is_deeply( [ t_module->_watches ], ['atd'], 'add() -> (watch file)++' );
+    is_deeply( [ t_module->watch_list ], ['atd'], 'add() -> (watch file)++' );
 
     throws_ok(
         sub { t_module->add() },
@@ -60,7 +61,7 @@ sub rm {
     eval{ t_module->rm('atd2') };
     ok( !$@, 'rm' );
     ok( ! -d '.dest/atd2', 'rm() -= directory' );
-    is_deeply( [ t_module->_watches ], ['atd'], 'rm() -> (watch file)--' );
+    is_deeply( [ t_module->watch_list ], ['atd'], 'rm() -> (watch file)--' );
 
     throws_ok(
         sub { t_module->rm() },
@@ -106,4 +107,25 @@ sub list {
 
 sub watches {
     is( ( t_capture( sub { t_module->watches } ) )[0], "atd\n", 'watches()' );
+}
+
+sub putwatch {
+    my ( $dest_a, $dest_b );
+    ok( open( $dest_a, '>', 'dest_a' ) || 0, 'open dest_a file for write' );
+    ok( open( $dest_b, '>', 'dest_b' ) || 0, 'open dest_b file for write' );
+
+    mkpath($_) for ( qw( a b c d e ) );
+    print $dest_a $_, "\n" for ( qw( a b c ) );
+    print $dest_b $_, "\n" for ( qw( b c d e ) );
+    close $_ for ( $dest_a, $dest_b );
+
+    is_deeply( [ t_module->watch_list ], [ qw(atd) ], 'watch_list' );
+    t_module->add('a');
+    is_deeply( [ t_module->watch_list ], [ qw( a atd ) ], 'watch_list' );
+
+    t_module->putwatch('dest_a');
+    is_deeply( [ t_module->watch_list ], [ qw( a b c ) ], 'watch_list' );
+
+    t_module->putwatch('dest_b');
+    is_deeply( [ t_module->watch_list ], [ qw( b c d e ) ], 'watch_list' );
 }

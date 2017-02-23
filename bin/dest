@@ -10,9 +10,10 @@ use Pod::Usage 'pod2usage';
 use App::Dest;
 
 my @commands = qw(
-    init add rm make list status diff clean preinstall
+    init add rm watches putwatch
+    make list status diff clean preinstall
     deploy redeploy revdeploy verify revert update
-    man version watches
+    man version
 );
 
 my ( $command, @args ) = @ARGV;

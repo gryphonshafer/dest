@@ -10,7 +10,8 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw( t_module t_dir t_startup t_teardown t_capture t_action_files );
 
-sub t_module { 'App::Dest' }
+require App::Dest;
+sub t_module { App::Dest->clear }
 
 {
     my ( $dir, $pwd );

@@ -1,28 +1,55 @@
 package App::Dest;
 # ABSTRACT: Deployment State Manager
 
-use 5.016;
+use 5.016_003;
 use strict;
 use warnings;
 
-use Cwd 'getcwd';
 use File::Basename qw( dirname basename );
 use File::Copy::Recursive 'dircopy';
 use File::DirCompare ();
 use File::Find 'find';
 use File::Path qw( mkpath rmtree );
 use IPC::Run 'run';
+use Path::Tiny 'path';
 use Text::Diff ();
 use Try::Tiny qw( try catch );
 
 # VERSION
 
-my %seen_files;
+my $env;
+
+sub clear {
+    $env = undef;
+    return __PACKAGE__;
+}
+
+sub _env {
+    return $env->{root_dir} if $env and $env->{root_dir};
+
+    $env = {
+        cwd        => Path::Tiny->cwd,
+        dir_depth  => 0,
+        seen_files => {},
+    };
+    $env->{root_dir} = $env->{cwd};
+
+    while ( not $env->{root_dir}->child('.dest')->is_dir ) {
+        if ( $env->{root_dir}->is_rootdir ) {
+            $env->{root_dir} = '';
+            last;
+        }
+        $env->{root_dir} = $env->{root_dir}->parent;
+        $env->{dir_depth}++;
+    }
+
+    return $env->{root_dir};
+}
 
 sub init {
     my ($self) = @_;
+    die "Project already initialized\n" if _env();
 
-    die "Project already initialized\n" if ( -d '.dest' );
     mkdir('.dest') or die "Unable to create .dest directory\n";
     open( my $watch, '>', '.dest/watch' ) or die "Unable to create .dest/watch file\n";
 
@@ -50,36 +77,39 @@ sub init {
                     : ''
             );
     }
+
+    clear();
+    _env();
     return 0;
 }
 
 sub add {
     my ( $self, $dir ) = @_;
-    $dir //= '';
-    $dir =~ s|/$||;
-
-    _find_root_dir();
+    die "Project not initialized\n" unless _env();
     die "No directory specified; usage: dest add [directory]\n" unless ($dir);
     die "Directory specified does not exist\n" unless ( -d $dir );
-    die "Directory $dir already added\n" if ( grep { $dir eq $_ } $self->_watches );
+
+    my $rel_dir = _rel2root($dir);
+    die "Directory $dir already added\n" if ( grep { $rel_dir eq $_ } $self->watch_list );
 
     open( my $watch, '>>', '.dest/watch' ) or die "Unable to write .dest/watch file\n";
     print $watch $dir, "\n";
 
-    mkpath(".dest/$dir");
+    mkpath("$env->{root_dir}/.dest/$rel_dir");
     return 0;
 }
 
 sub rm {
     my ( $self, $dir ) = @_;
+    die "Project not initialized\n" unless _env();
+
     $dir //= '';
     $dir =~ s|/$||;
 
-    die "Not in project root directory or project not initialized\n" unless ( -d '.dest' );
     die "No directory specified; usage: dest rm [directory]\n" unless ($dir);
-    die "Directory $dir not currently tracked\n" unless ( grep { $dir eq $_ } $self->_watches );
+    die "Directory $dir not currently tracked\n" unless ( grep { $dir eq $_ } $self->watch_list );
 
-    my @watches = $self->_watches;
+    my @watches = $self->watch_list;
     open( my $watch, '>', '.dest/watch' ) or die "Unable to write .dest/watch file\n";
     print $watch $_, "\n" for ( grep { $_ ne $dir } @watches );
 
@@ -87,8 +117,39 @@ sub rm {
     return 0;
 }
 
+sub watches {
+    my ($self) = @_;
+    die "Project not initialized\n" unless _env();
+
+    print join( "\n", $self->watch_list ), "\n";
+    return 0;
+}
+
+sub putwatch {
+    my ( $self, $file ) = @_;
+    die "Project not initialized\n" unless _env();
+    die "File specified does not exist\n" unless ( -f $file );
+
+    open( my $new_watches, '<', $file ) or die "Unable to read specified file\n";
+
+    my @new = map { chomp; $_ } <$new_watches>;
+    my @old = $self->watch_list;
+
+    for my $old (@old) {
+        next if ( grep { $_ eq $old } @new );
+        $self->rm($old);
+    }
+    for my $new (@new) {
+        next if ( grep { $_ eq $new } @old );
+        $self->add($new);
+    }
+
+    return 0;
+}
+
 sub make {
     my ( $self, $path, $ext ) = @_;
+    die "Project not initialized\n" unless _env();
     die "No name specified; usage: dest make [path]\n" unless ($path);
 
     $ext = '.' . $ext if ( defined $ext );
@@ -109,12 +170,13 @@ sub make {
 
 sub list {
     my ( $self, $path ) = @_;
+    die "Project not initialized\n" unless _env();
 
     if ($path) {
         print join( ' ', map { <"$path/$_*"> } qw( deploy verify revert ) ), "\n";
     }
     else {
-        for my $path ( $self->_watches ) {
+        for my $path ( $self->watch_list ) {
             print $path, "\n";
 
             find( {
@@ -134,7 +196,7 @@ sub list {
 
 sub status {
     my ($self) = @_;
-    _find_root_dir();
+    die "Project not initialized\n" unless _env();
 
     if ( -f 'dest.watch' ) {
         my $diff = Text::Diff::diff( '.dest/watch', 'dest.watch' );
@@ -142,7 +204,7 @@ sub status {
     }
 
     my %seen_actions;
-    for ( $self->_watches ) {
+    for ( $self->watch_list ) {
         my ( $this_path, $printed_path ) = ( $_, 0 );
 
         eval { File::DirCompare->compare( ".dest/$_", $_, sub {
@@ -178,9 +240,10 @@ sub status {
 
 sub diff {
     my ( $self, $path ) = @_;
+    die "Project not initialized\n" unless _env();
 
     if ( not defined $path ) {
-        $self->diff($_) for ( $self->_watches );
+        $self->diff($_) for ( $self->watch_list );
         return 0;
     }
 
@@ -197,12 +260,78 @@ sub diff {
     return 0;
 }
 
+sub clean {
+    my ($self) = @_;
+    die "Project not initialized\n" unless _env();
+
+    for ( $self->watch_list ) {
+        rmtree(".dest/$_");
+        dircopy( $_, ".dest/$_" );
+    }
+    return 0;
+}
+
+sub preinstall {
+    my ($self) = @_;
+    die "Project not initialized\n" unless _env();
+
+    for ( $self->watch_list ) {
+        rmtree(".dest/$_");
+        mkdir(".dest/$_");
+    }
+    return 0;
+}
+
+sub deploy {
+    my ( $self, $name, $redeploy ) = @_;
+    die "Project not initialized\n" unless _env();
+    die "File to deploy required; usage: dest deploy file\n" unless ($name);
+
+    my $rv = $self->_action( $name, 'deploy', $redeploy );
+    dircopy( $_, ".dest/$_" ) for ( grep { s|/deploy[^/]*$|| } keys %{ $env->{seen_files} } );
+    return $rv;
+}
+
+sub verify {
+    my ( $self, $path ) = @_;
+    die "Project not initialized\n" unless _env();
+
+    return $self->_action( $path, 'verify' );
+}
+
+sub revert {
+    my ( $self, $name ) = @_;
+    die "Project not initialized\n" unless _env();
+    die "File to revert required; usage: dest revert file\n" unless ($name);
+
+    my $rv = $self->_action( ".dest/$name", 'revert' );
+    rmtree(".dest/$_") for (
+        map { s|^.dest/||; $_ } grep { s|/revert[^/]*$|| } keys %{ $env->{seen_files} }
+    );
+    return $rv;
+}
+
+sub redeploy {
+    my ( $self, $name ) = @_;
+    die "Project not initialized\n" unless _env();
+
+    return $self->deploy( $name, 'redeploy' );
+}
+
+sub revdeploy {
+    my ( $self, $name ) = @_;
+    die "Project not initialized\n" unless _env();
+
+    $self->revert($name);
+    return $self->deploy($name);
+}
+
 sub update {
     my $self = shift;
-    _find_root_dir();
+    die "Project not initialized\n" unless _env();
 
     if ( -f 'dest.watch' ) {
-        my @watches = $self->_watches;
+        my @watches = $self->watch_list;
         open( my $watch, '<', 'dest.watch' ) or die "Unable to read dest.watch file\n";
 
         for my $candidate ( map { chomp; $_ } <$watch> ) {
@@ -214,7 +343,7 @@ sub update {
     }
 
     my @paths   = @_;
-    my @watches = $self->_watches;
+    my @watches = $self->watch_list;
 
     if (@paths) {
         @watches = grep {
@@ -254,83 +383,14 @@ sub update {
     return 0;
 }
 
-sub verify {
-    my ( $self, $path ) = @_;
-    _find_root_dir();
-    return $self->_action( $path, 'verify' );
-}
-
-sub deploy {
-    my ( $self, $name, $redeploy ) = @_;
-    die "File to deploy required; usage: dest deploy file\n" unless ($name);
-    _find_root_dir();
-    my $rv = $self->_action( $name, 'deploy', $redeploy );
-    dircopy( $_, ".dest/$_" ) for ( grep { s|/deploy[^/]*$|| } keys %seen_files );
-    return $rv;
-}
-
-sub revert {
-    my ( $self, $name ) = @_;
-    die "File to revert required; usage: dest revert file\n" unless ($name);
-    _find_root_dir();
-    my $rv = $self->_action( ".dest/$name", 'revert' );
-    rmtree(".dest/$_") for ( map { s|^.dest/||; $_ } grep { s|/revert[^/]*$|| } keys %seen_files );
-    return $rv;
-}
-
-sub redeploy {
-    my ( $self, $name ) = @_;
-    return $self->deploy( $name, 'redeploy' );
-}
-
-sub revdeploy {
-    my ( $self, $name ) = @_;
-    $self->revert($name);
-    return $self->deploy($name);
-}
-
-sub clean {
-    my ($self) = @_;
-    _find_root_dir();
-    for ( $self->_watches ) {
-        rmtree(".dest/$_");
-        dircopy( $_, ".dest/$_" );
-    }
-    return 0;
-}
-
-sub preinstall {
-    my ($self) = @_;
-    _find_root_dir();
-    for ( $self->_watches ) {
-        rmtree(".dest/$_");
-        mkdir(".dest/$_");
-    }
-    return 0;
-}
-
-sub watches {
-    my ($self) = @_;
-    print join( "\n", $self->_watches ), "\n";
-    return 0;
-}
-
-sub _find_root_dir {
-    while ( getcwd() ne '/' ) {
-        return if ( -d '.dest' );
-        chdir('..');
-    }
-    die "Failed to find project root dir; run init in project root dir to resolve\n";
-}
-
-sub _watches {
+sub watch_list {
     open( my $watch, '<', '.dest/watch' ) or die "Unable to read .dest/watch file\n";
     return sort { $a cmp $b } map { chomp; $_ } <$watch>;
 }
 
 sub _action {
     my ( $self, $path, $type, $redeploy ) = @_;
-    %seen_files = ();
+    $env->{seen_files} = {};
 
     if ($path) {
         my @files = <"$path/$type*">;
@@ -350,7 +410,7 @@ sub _action {
                 return unless ( /\/$type/ );
                 $self->_execute($_) or die "Failed to $type $_\n";
             },
-        }, $self->_watches );
+        }, $self->watch_list );
     }
 
     return 0;
@@ -358,7 +418,7 @@ sub _action {
 
 sub _execute {
     my ( $self, $file, $run_quiet, $is_dependency ) = @_;
-    return if ( $seen_files{$file}++ );
+    return if ( $env->{seen_files}{$file}++ );
 
     my @nodes = split( '/', $file );
     my $type = pop @nodes;
@@ -445,6 +505,14 @@ sub _execute {
     return 1;
 }
 
+sub _rel2root {
+    return substr( path( $env->{cwd} . '/' . ( shift || '.' ) )->realpath, length($env->{root_dir}) + 1 );
+}
+
+sub _rel2dir {
+    return '../' x $env->{dir_depth} . ( shift || '.' );
+}
+
 1;
 __END__
 
@@ -467,9 +535,11 @@ dest COMMAND [DIR || NAME]
     dest init            # initialize dest for a project
     dest add DIR         # add a directory to dest tracking list
     dest rm DIR          # remove a directory from dest tracking list
-    dest make NAME [EXT] # create a named template set (set of 3 files)
     dest watches         # returns a list of watched directories
+    dest putwatch FILE   # set watch list to be what's in a file
+    dest make NAME [EXT] # create a named template set (set of 3 files)
     dest list [NAME]     # dump a list of the template set (set of 3 files)
+
     dest status          # check status of tracked directories
     dest diff [NAME]     # display a diff of any modified actions
     dest clean           # reset dest state to match current files/directories
@@ -546,6 +616,19 @@ the verify file let's you verify the deploy file worked.
 
 This removes a directory from the dest tracking list.
 
+=head2 watches
+
+Returns a list of tracked or watched directories.
+
+=head2 putwatch FILE
+
+Sets the current list of tracked or watched directories to be what's in a file.
+For example, you could do this:
+
+    dest watches > dest.watch
+    echo 'new_dir_to_watch' >> dest.watch
+    dest putwatch dest.watch
+
 =head2 make NAME [EXT]
 
 This is a helper command. Given a directory you've already added, it will create
@@ -566,10 +649,6 @@ Optionally, you can specify an extention for the created files. For example:
     #    db/schema/deploy.sql
     #    db/schema/revert.sql
     #    db/schema/verify.sql
-
-=head2 watches
-
-Returns a list of tracked or watched directories.
 
 =head2 list [NAME]
 
@@ -791,5 +870,7 @@ You can also look for additional information at:
 * L<Coveralls|https://coveralls.io/r/gryphonshafer/dest>
 * L<CPANTS|http://cpants.cpanauthors.org/dist/App-Dest>
 * L<CPAN Testers|http://www.cpantesters.org/distro/A/App-Dest.html>
+
+=for Pod::Coverage clear watch_list
 
 =cut
