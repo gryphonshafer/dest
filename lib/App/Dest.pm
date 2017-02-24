@@ -491,9 +491,9 @@ sub _execute {
     my $wrap;
     shift @nodes if ( $nodes[0] eq '.dest' );
     while (@nodes) {
-        my $path = join( '/', @nodes );
-        if ( -f "$path/dest.wrap" ) {
-            $wrap = "$path/dest.wrap";
+        my $path = _rel2dir( join( '/', @nodes ) . '/dest.wrap' );
+        if ( -f $path ) {
+            $wrap = $path;
             last;
         }
         pop @nodes;
