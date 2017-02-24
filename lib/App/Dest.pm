@@ -84,44 +84,67 @@ sub init {
 }
 
 sub add {
-    my ( $self, $dir ) = @_;
+    my $self = shift;
     die "Project not initialized\n" unless _env();
-    die "No directory specified; usage: dest add [directory]\n" unless ($dir);
-    die "Directory specified does not exist\n" unless ( -d $dir );
+    die "No directory specified; usage: dest add [directory]\n" unless ( $_[0] );
 
-    my $rel_dir = _rel2root($dir);
-    die "Directory $dir already added\n" if ( grep { $rel_dir eq $_ } $self->watch_list );
+    my @watches = $self->watch_list;
+    my @adds    = map {
+        my $dir = $_;
+        die "Directory specified does not exist\n" unless ( -d $dir );
 
-    open( my $watch, '>>', '.dest/watch' ) or die "Unable to write .dest/watch file\n";
-    print $watch $dir, "\n";
+        my $rel_dir = _rel2root($dir);
+        die "Directory $dir already added\n" if ( grep { $rel_dir eq $_ } @watches );
+        $rel_dir;
+    } @_;
 
-    mkpath("$env->{root_dir}/.dest/$rel_dir");
+    open( my $watch, '>', _rel2dir('.dest/watch') ) or die "Unable to write .dest/watch file\n";
+    print $watch $_, "\n" for ( sort @adds, map { _rel2root($_) } @watches );
+    mkpath("$env->{root_dir}/.dest/$_") for (@adds);
     return 0;
 }
 
 sub rm {
-    my ( $self, $dir ) = @_;
+    my $self = shift;
     die "Project not initialized\n" unless _env();
-
-    $dir //= '';
-    $dir =~ s|/$||;
-
-    die "No directory specified; usage: dest rm [directory]\n" unless ($dir);
-    die "Directory $dir not currently tracked\n" unless ( grep { $dir eq $_ } $self->watch_list );
+    die "No directory specified; usage: dest rm [directory]\n" unless ( $_[0] );
 
     my @watches = $self->watch_list;
-    open( my $watch, '>', '.dest/watch' ) or die "Unable to write .dest/watch file\n";
-    print $watch $_, "\n" for ( grep { $_ ne $dir } @watches );
+    my @rms     = map {
+        my $dir = $_;
+        $dir //= '';
+        $dir =~ s|/$||;
 
-    rmtree(".dest/$dir");
+        die "Directory $dir not currently tracked\n" unless ( grep { $dir eq $_ } @watches );
+
+        _rel2root($dir);
+    } @_;
+
+    open( my $watch_file, '>', _rel2dir('.dest/watch') ) or die "Unable to write .dest/watch file\n";
+    for my $watch_dir ( map { _rel2root($_) } @watches ) {
+        if ( grep { $watch_dir eq $_ } @rms ) {
+            rmtree( _rel2dir(".dest/$watch_dir") );
+        }
+        else {
+            print $watch_file $watch_dir, "\n";
+        }
+    }
+
     return 0;
+}
+
+sub watch_list {
+    _env();
+    open( my $watch, '<', _rel2dir('.dest/watch') ) or die "Unable to read ~/.dest/watch file\n";
+    return sort { $a cmp $b } map { chomp; _rel2dir($_) } <$watch>;
 }
 
 sub watches {
     my ($self) = @_;
     die "Project not initialized\n" unless _env();
 
-    print join( "\n", $self->watch_list ), "\n";
+    my @watches = $self->watch_list;
+    print join( "\n", @watches ), "\n" if @watches;
     return 0;
 }
 
@@ -155,14 +178,16 @@ sub make {
     $ext = '.' . $ext if ( defined $ext );
     $ext //= '';
 
-    eval {
+    try {
         mkpath($path);
         for ( qw( deploy verify revert ) ) {
             open( my $file, '>', "$path/$_$ext" ) or die;
             print $file "\n";
         }
+    }
+    catch {
+        die "Failed to fully make $path; check permissions or existing files\n";
     };
-    die "Failed to fully make $path; check permissions or existing files\n" if ($@);
 
     $self->list($path);
     return 0;
@@ -198,16 +223,16 @@ sub status {
     my ($self) = @_;
     die "Project not initialized\n" unless _env();
 
-    if ( -f 'dest.watch' ) {
-        my $diff = Text::Diff::diff( '.dest/watch', 'dest.watch' );
-        warn "Diff between current watch list and dest.watch file:\n" . $diff if ($diff);
+    if ( -f _rel2dir('dest.watch') ) {
+        my $diff = Text::Diff::diff( _rel2dir('.dest/watch'), _rel2dir('dest.watch') );
+        warn "Diff between current watch list and dest.watch file:\n" . $diff . "\n" if ($diff);
     }
 
     my %seen_actions;
     for ( $self->watch_list ) {
         my ( $this_path, $printed_path ) = ( $_, 0 );
 
-        eval { File::DirCompare->compare( ".dest/$_", $_, sub {
+        eval { File::DirCompare->compare( _rel2dir( '.dest/' . _rel2root($this_path) ), $this_path, sub {
             my ( $a, $b ) = @_;
             return if ( $a and $a =~ /\/dest.wrap$/ or $b and $b =~ /\/dest.wrap$/ );
             print 'diff - ', $this_path, "\n" unless ( $printed_path++ );
@@ -247,7 +272,7 @@ sub diff {
         return 0;
     }
 
-    eval { File::DirCompare->compare( ".dest/$path", $path, sub {
+    eval { File::DirCompare->compare( _rel2dir( '.dest/' . _rel2root($path) ), $path, sub {
         my ( $a, $b ) = @_;
         $a ||= '';
         $b ||= '';
@@ -264,9 +289,10 @@ sub clean {
     my ($self) = @_;
     die "Project not initialized\n" unless _env();
 
-    for ( $self->watch_list ) {
-        rmtree(".dest/$_");
-        dircopy( $_, ".dest/$_" );
+    for ( map { _rel2root($_) } $self->watch_list ) {
+        my $dest = _rel2dir(".dest/$_");
+        rmtree($dest);
+        dircopy( _rel2dir($_), $dest );
     }
     return 0;
 }
@@ -275,9 +301,10 @@ sub preinstall {
     my ($self) = @_;
     die "Project not initialized\n" unless _env();
 
-    for ( $self->watch_list ) {
-        rmtree(".dest/$_");
-        mkdir(".dest/$_");
+    for ( map { _rel2root($_) } $self->watch_list ) {
+        my $dest = _rel2dir(".dest/$_");
+        rmtree($dest);
+        mkdir($dest);
     }
     return 0;
 }
@@ -288,7 +315,9 @@ sub deploy {
     die "File to deploy required; usage: dest deploy file\n" unless ($name);
 
     my $rv = $self->_action( $name, 'deploy', $redeploy );
-    dircopy( $_, ".dest/$_" ) for ( grep { s|/deploy[^/]*$|| } keys %{ $env->{seen_files} } );
+    dircopy( $_, _rel2dir( '.dest/' . _rel2root($_) ) )
+        for ( grep { s|/deploy[^/]*$|| } keys %{ $env->{seen_files} } );
+
     return $rv;
 }
 
@@ -304,10 +333,11 @@ sub revert {
     die "Project not initialized\n" unless _env();
     die "File to revert required; usage: dest revert file\n" unless ($name);
 
-    my $rv = $self->_action( ".dest/$name", 'revert' );
-    rmtree(".dest/$_") for (
-        map { s|^.dest/||; $_ } grep { s|/revert[^/]*$|| } keys %{ $env->{seen_files} }
+    my $rv = $self->_action( _rel2dir( '.dest/' . _rel2root($name) ), 'revert' );
+    rmtree( _rel2dir( _rel2root($_) ) ) for (
+        grep { s|/revert[^/]*$|| } keys %{ $env->{seen_files} }
     );
+
     return $rv;
 }
 
@@ -330,11 +360,11 @@ sub update {
     my $self = shift;
     die "Project not initialized\n" unless _env();
 
-    if ( -f 'dest.watch' ) {
+    if ( -f _rel2dir('dest.watch') ) {
         my @watches = $self->watch_list;
-        open( my $watch, '<', 'dest.watch' ) or die "Unable to read dest.watch file\n";
+        open( my $watch, '<', _rel2dir('dest.watch') ) or die "Unable to read dest.watch file\n";
 
-        for my $candidate ( map { chomp; $_ } <$watch> ) {
+        for my $candidate ( map { chomp; _rel2dir($_) } <$watch> ) {
             unless ( grep { $_ eq $candidate } @watches ) {
                 $self->add($candidate);
                 warn "Added $candidate to the watch list\n";
@@ -352,7 +382,7 @@ sub update {
         } @watches;
     }
 
-    File::DirCompare->compare( ".dest/$_", $_, sub {
+    File::DirCompare->compare( _rel2dir( '.dest/' . _rel2root($_) ), $_, sub {
         my ( $a, $b ) = @_;
         return if ( $a and $a =~ /\/dest.wrap$/ or $b and $b =~ /\/dest.wrap$/ );
 
@@ -375,17 +405,12 @@ sub update {
                 $self->deploy($b);
             }
             else {
-                $self->dircopy( $a, ".dest/$a" );
+                dircopy( $a, _rel2dir( '.dest' . _rel2root($a) ) );
             }
         }
     } ) for (@watches);
 
     return 0;
-}
-
-sub watch_list {
-    open( my $watch, '<', '.dest/watch' ) or die "Unable to read .dest/watch file\n";
-    return sort { $a cmp $b } map { chomp; $_ } <$watch>;
 }
 
 sub _action {
@@ -398,7 +423,8 @@ sub _action {
 
         unless ($file) {
             my $this_file = ( split( '/', $path ) )[-1];
-            die "Unable to $type $this_file (perhaps action has already occured)\n";
+            die "Unable to $type $this_file "
+                . "(perhaps $this_file $type has already occured or $this_file isn't an action)\n";
         }
         $self->_execute( $file, $redeploy ) or die "Failed to $type $path\n";
     }
@@ -420,14 +446,15 @@ sub _execute {
     my ( $self, $file, $run_quiet, $is_dependency ) = @_;
     return if ( $env->{seen_files}{$file}++ );
 
-    my @nodes = split( '/', $file );
-    my $type = pop @nodes;
-    ( my $action = join( '/', @nodes ) ) =~ s|^\.dest/||;
+    my @nodes = split( '/', _rel2root($file) );
 
+    my $type = pop @nodes;
     $type =~ s/\..*$//;
 
+    ( my $action = join( '/', @nodes ) ) =~ s|(?<!\w)\.dest/||;
+
     if (
-        ( $type eq 'deploy' and not $run_quiet and -f '.dest/' . $file ) or
+        ( $type eq 'deploy' and not $run_quiet and -f _rel2dir( '.dest/' . _rel2root($file) ) ) or
         ( $type eq 'revert' and not -f $file )
     ) {
         if ( $is_dependency ) {
@@ -445,11 +472,19 @@ sub _execute {
         map { /dest\.prereq\b[\s:=-]+(.+?)\s*$/; $1 || undef }
         grep { /dest\.prereq/ } <$content>
     ) {
-        my @files = <"$_/$type*">;
+        my $rel_dir = _rel2dir($_);
+        my @files   = <"$rel_dir/$type*">;
+
         die "Unable to find prereq \"$_/$type*\"\n" unless ( $files[0] );
-        $self->_execute( $files[0], $run_quiet, 'dependency' ) or return 0 if (
-            ( $type eq 'deploy' and not -f '.dest/' . $files[0] ) or
-            ( $type eq 'revert' and -f '.dest/' . $files[0] )
+        my $dest_file = _rel2dir( '.dest/' . _rel2root( $files[0] ) );
+
+        $self->_execute(
+            ( ( $type ne 'revert' ) ? $files[0] : $dest_file ),
+            $run_quiet,
+            'dependency',
+        ) or return 0 if (
+            ( $type eq 'deploy' and not -f $dest_file ) or
+            ( $type eq 'revert' and     -f $dest_file )
         );
     }
 
@@ -493,7 +528,7 @@ sub _execute {
         print "begin - $type: $action\n";
         $run->();
 
-        $file =~ s|^\.dest/||;
+        $file =~ s|(?<!\w)\.dest/||;
         print "ok - $type: $action\n";
 
         if ( $type eq 'deploy' ) {
@@ -506,11 +541,21 @@ sub _execute {
 }
 
 sub _rel2root {
-    return substr( path( $env->{cwd} . '/' . ( shift || '.' ) )->realpath, length($env->{root_dir}) + 1 );
+    my ($dir) = @_;
+    my $path  = path( $dir || '.' );
+
+    try {
+        $path = $path->realpath;
+    }
+    catch {
+        $path = $path->absolute;
+    };
+
+    return $path->relative( $env->{root_dir} )->stringify;
 }
 
 sub _rel2dir {
-    return '../' x $env->{dir_depth} . ( shift || '.' );
+    return ( '../' x ( $env->{dir_depth} || 0 ) ) . ( $_[0] || '.' );
 }
 
 1;
