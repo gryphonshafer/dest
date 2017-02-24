@@ -6,6 +6,7 @@ use strict;
 use warnings;
 
 use File::Basename qw( dirname basename );
+use File::Copy 'copy';
 use File::Copy::Recursive 'dircopy';
 use File::DirCompare ();
 use File::Find 'find';
@@ -167,6 +168,13 @@ sub putwatch {
         $self->add($new);
     }
 
+    return 0;
+}
+
+sub writewatch {
+    my ($self) = @_;
+    _env();
+    copy( _rel2dir('.dest/watch'), _rel2dir('dest.watch') ) or die "$!\n";
     return 0;
 }
 
@@ -587,8 +595,11 @@ dest COMMAND [DIR || NAME]
     dest init            # initialize dest for a project
     dest add DIR         # add a directory to dest tracking list
     dest rm DIR          # remove a directory from dest tracking list
+
     dest watches         # returns a list of watched directories
     dest putwatch FILE   # set watch list to be what's in a file
+    dest writewatch      # creates watch file in project root directory
+
     dest make NAME [EXT] # create a named template set (set of 3 files)
     dest list [NAME]     # dump a list of the template set (set of 3 files)
 
@@ -680,6 +691,11 @@ For example, you could do this:
     dest watches > dest.watch
     echo 'new_dir_to_watch' >> dest.watch
     dest putwatch dest.watch
+
+=head2 writewatch
+
+Creates (or overwrites) a watch file in the project root directory with the
+contents of the currently watched directories.
 
 =head2 make NAME [EXT]
 

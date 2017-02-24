@@ -10,7 +10,7 @@ use Pod::Usage 'pod2usage';
 use App::Dest;
 
 my @commands = qw(
-    init add rm watches putwatch
+    init add rm watches putwatch writewatch
     make list status diff clean preinstall
     deploy redeploy revdeploy verify revert update
     man version
