@@ -437,7 +437,7 @@ sub _action {
             die "Unable to $type $this_file "
                 . "(perhaps $this_file $type has already occured or $this_file isn't an action)\n";
         }
-        $self->_execute( $file, $redeploy ) or die "Failed to $type $path\n";
+        $self->_execute( $file, $redeploy ) or die "Failed to $type $path (check interdependencies)\n";
     }
     else {
         find( {
@@ -510,13 +510,18 @@ sub _execute {
         pop @nodes;
     }
 
-    my ( $out, $err );
+    my ( $out, $err, $died );
     my $run = sub {
         try {
+            unless ( ($wrap) ? -x $wrap : -x $file ) {
+                $died = 1;
+                die 'Execute permission denied' . ( ($wrap) ? ' on dest.wrap file' : '' ) . "\n";
+            }
+
             run(
                 [ grep { defined } ( ($wrap) ? $wrap : undef ), $file ],
                 \undef, \$out, \$err,
-            );
+            ) or $died = 1;
         }
         catch {
             $err = $_;
@@ -525,7 +530,12 @@ sub _execute {
         if ($err) {
             ( my $err_str = $err ) =~ s/\s*at\s+.*$//;
             chomp($err_str);
-            die "Failed to execute $file: $err_str\n";
+            if ($died) {
+                die "Failed to execute $file: $err_str\n";
+            }
+            else {
+                warn "Warnings from executed $file: $err_str\n";
+            }
         }
     };
 
