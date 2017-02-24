@@ -1,6 +1,8 @@
 Revision history for App::Dest
 
 {{$NEXT}}
+
+1.15      2017-02-24 12:44:17-08:00 America/Los_Angeles
         - Support for non-root directory execution
         - dest.wrap operational from non-root execution paths
         - Replace use of eval with Try::Tiny
