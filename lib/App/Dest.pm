@@ -13,7 +13,7 @@ use File::Path qw( mkpath rmtree );
 use IPC::Run 'run';
 use Path::Tiny 'path';
 use Text::Diff ();
-use Try::Tiny qw( try catch );
+use Try::Tiny qw( try catch finally );
 
 # VERSION
 
@@ -232,32 +232,33 @@ sub status {
     for ( $self->watch_list ) {
         my ( $this_path, $printed_path ) = ( $_, 0 );
 
-        eval { File::DirCompare->compare( _rel2dir( '.dest/' . _rel2root($this_path) ), $this_path, sub {
-            my ( $a, $b ) = @_;
-            return if ( $a and $a =~ /\/dest.wrap$/ or $b and $b =~ /\/dest.wrap$/ );
-            print 'diff - ', $this_path, "\n" unless ( $printed_path++ );
+        try {
+            File::DirCompare->compare( _rel2dir( '.dest/' . _rel2root($this_path) ), $this_path, sub {
+                my ( $a, $b ) = @_;
+                return if ( $a and $a =~ /\/dest.wrap$/ or $b and $b =~ /\/dest.wrap$/ );
+                print 'diff - ', $this_path, "\n" unless ( $printed_path++ );
 
-            if ( not $b ) {
-                print '  - ', substr( $a, 7 ), "\n";
-            }
-            elsif ( not $a ) {
-                print "  + $b\n";
-            }
-            else {
-                ( my $action = $b ) =~ s,/(?:deploy|verify|revert)$,,;
-                print "  $action\n" unless ( $seen_actions{$action}++ );
-                print "    M $b\n";
-            }
+                if ( not $b ) {
+                    print '  - ', substr( $a, 7 ), "\n";
+                }
+                elsif ( not $a ) {
+                    print "  + $b\n";
+                }
+                else {
+                    ( my $action = $b ) =~ s,/(?:deploy|verify|revert)$,,;
+                    print "  $action\n" unless ( $seen_actions{$action}++ );
+                    print "    M $b\n";
+                }
 
-            return;
-        } ) };
-
-        if ( $@ and $@ =~ /Not a directory/ ) {
-            print '? - ', $this_path, "\n";
+                return;
+            } )
         }
-        else {
-            print 'ok - ', $this_path, "\n" unless ($printed_path);
+        catch {
+            print '? - ', $this_path, "\n" if ( /Not a directory/ );
         }
+        finally {
+            print 'ok - ', $this_path, "\n" unless ( $_[0] =~ /Not a directory/ or $printed_path );
+        };
     }
 
     return 0;
@@ -272,15 +273,17 @@ sub diff {
         return 0;
     }
 
-    eval { File::DirCompare->compare( _rel2dir( '.dest/' . _rel2root($path) ), $path, sub {
-        my ( $a, $b ) = @_;
-        $a ||= '';
-        $b ||= '';
+    try {
+        File::DirCompare->compare( _rel2dir( '.dest/' . _rel2root($path) ), $path, sub {
+            my ( $a, $b ) = @_;
+            $a ||= '';
+            $b ||= '';
 
-        return if ( $a =~ /\/dest.wrap$/ or $b =~ /\/dest.wrap$/ );
-        print Text::Diff::diff( $a, $b );
-        return;
-    } ) };
+            return if ( $a =~ /\/dest.wrap$/ or $b =~ /\/dest.wrap$/ );
+            print Text::Diff::diff( $a, $b );
+            return;
+        } )
+    };
 
     return 0;
 }
@@ -501,14 +504,18 @@ sub _execute {
 
     my ( $out, $err );
     my $run = sub {
-        eval {
+        try {
             run(
                 [ grep { defined } ( ($wrap) ? $wrap : undef ), $file ],
                 \undef, \$out, \$err,
             );
+        }
+        catch {
+            $err = $_;
         };
-        if ( $@ or $err ) {
-            ( my $err_str = $@ || $err ) =~ s/\s*at\s+.*$//;
+
+        if ($err) {
+            ( my $err_str = $err ) =~ s/\s*at\s+.*$//;
             chomp($err_str);
             die "Failed to execute $file: $err_str\n";
         }
