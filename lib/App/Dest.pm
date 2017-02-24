@@ -265,7 +265,7 @@ sub status {
             print '? - ', $this_path, "\n" if ( /Not a directory/ );
         }
         finally {
-            print 'ok - ', $this_path, "\n" unless ( $_[0] =~ /Not a directory/ or $printed_path );
+            print 'ok - ', $this_path, "\n" unless ( /Not a directory/ or $printed_path );
         };
     }
 
