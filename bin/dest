@@ -35,7 +35,7 @@ usage(1) if ( not @command or @command > 1 );
 usage(2) if ( $command eq 'man' );
 
 if ( $command eq 'version' ) {
-    print $App::Dest::VERSION, "\n";
+    print $App::Dest::VERSION || 0, "\n";
     exit;
 }
 
