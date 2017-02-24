@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use 5.016;
+use 5.016_003;
 
 use ExtUtils::MakeMaker;
 
@@ -17,16 +17,17 @@ my %WriteMakefileArgs = (
     "bin/dest"
   ],
   "LICENSE" => "perl",
-  "MIN_PERL_VERSION" => "5.016",
+  "MIN_PERL_VERSION" => "5.016_003",
   "NAME" => "App::Dest",
   "PREREQ_PM" => {
-    "Cwd" => 0,
     "File::Basename" => 0,
+    "File::Copy" => 0,
     "File::Copy::Recursive" => 0,
     "File::DirCompare" => 0,
     "File::Find" => 0,
     "File::Path" => 0,
     "IPC::Run" => 0,
+    "Path::Tiny" => 0,
     "Pod::Usage" => 0,
     "Text::Diff" => 0,
     "Try::Tiny" => 0,
@@ -34,8 +35,8 @@ my %WriteMakefileArgs = (
     "warnings" => 0
   },
   "TEST_REQUIRES" => {
+    "Cwd" => 0,
     "Exporter" => 0,
-    "File::Copy" => 0,
     "File::Spec" => 0,
     "IO::Handle" => 0,
     "IPC::Open3" => 0,
@@ -44,7 +45,7 @@ my %WriteMakefileArgs = (
     "blib" => "1.01",
     "lib" => 0
   },
-  "VERSION" => "1.14",
+  "VERSION" => "1.15",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -64,6 +65,7 @@ my %FallbackPrereqs = (
   "IO::Handle" => 0,
   "IPC::Open3" => 0,
   "IPC::Run" => 0,
+  "Path::Tiny" => 0,
   "Pod::Usage" => 0,
   "Test::More" => 0,
   "Test::Most" => 0,

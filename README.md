@@ -4,7 +4,7 @@ App::Dest - Deployment State Manager
 
 # VERSION
 
-version 1.14
+version 1.15
 
 [![Build Status](https://travis-ci.org/gryphonshafer/dest.svg)](https://travis-ci.org/gryphonshafer/dest)
 [![Coverage Status](https://coveralls.io/repos/gryphonshafer/dest/badge.png)](https://coveralls.io/r/gryphonshafer/dest)
@@ -16,9 +16,14 @@ dest COMMAND \[DIR || NAME\]
     dest init            # initialize dest for a project
     dest add DIR         # add a directory to dest tracking list
     dest rm DIR          # remove a directory from dest tracking list
-    dest make NAME [EXT] # create a named template set (set of 3 files)
+
     dest watches         # returns a list of watched directories
+    dest putwatch FILE   # set watch list to be what's in a file
+    dest writewatch      # creates watch file in project root directory
+
+    dest make NAME [EXT] # create a named template set (set of 3 files)
     dest list [NAME]     # dump a list of the template set (set of 3 files)
+
     dest status          # check status of tracked directories
     dest diff [NAME]     # display a diff of any modified actions
     dest clean           # reset dest state to match current files/directories
@@ -48,16 +53,16 @@ particular software project using your favorite revision control system.
 Let's also say that you have a database that undergoes schema changes as
 features are developed, and you have various system activities like the
 installation of libraries or other applications. Then let's also say the team
-braches, works on stuff, shares those branches, reverts, merges, etc. And also
+branches, works on stuff, shares those branches, reverts, merges, etc. And also
 from time to time you want to go back in time a bit so you can reproduce a bug.
 Maintaining the database state and the state of the system across all that
 activity can be problematic. dest tries to solve this in a very simple way,
 letting you be able to deploy, revert, and verify to any point in time in
 the development history.
 
-Using dest for production deployment, provisioning, or configuration management
-is not advised. Use something like Ansible et al instead. Ansible (or whatever
-CM tool you prefer) can use dest to perform some actions.
+Note that using dest for production deployment, provisioning, or configuration
+management is not advised. Use a full-featured configuration management tool
+instead.
 
 # COMMANDS
 
@@ -72,8 +77,8 @@ while in the root directory of your project. (If you are in a different
 directory, dest will assume that is your project's root directory.)
 
 The initialization will result in a `.dest` directory being created.
-You'll almost certainly want to add ".dest" to your .gitignore file or
-whatever.
+You'll almost certainly want to add ".dest" to your \`.gitignore\` file or
+similar revision control ignore file.
 
 ## add DIR
 
@@ -95,6 +100,24 @@ the verify file let's you verify the deploy file worked.
 
 This removes a directory from the dest tracking list.
 
+## watches
+
+Returns a list of tracked or watched directories.
+
+## putwatch FILE
+
+Sets the current list of tracked or watched directories to be what's in a file.
+For example, you could do this:
+
+    dest watches > dest.watch
+    echo 'new_dir_to_watch' >> dest.watch
+    dest putwatch dest.watch
+
+## writewatch
+
+Creates (or overwrites) a watch file in the project root directory with the
+contents of the currently watched directories.
+
 ## make NAME \[EXT\]
 
 This is a helper command. Given a directory you've already added, it will create
@@ -115,10 +138,6 @@ Optionally, you can specify an extention for the created files. For example:
     #    db/schema/deploy.sql
     #    db/schema/revert.sql
     #    db/schema/verify.sql
-
-## watches
-
-Returns a list of tracked or watched directories.
 
 ## list \[NAME\]
 
@@ -346,7 +365,7 @@ Gryphon Shafer &lt;gryphon@cpan.org>
 
 # COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2015 by Gryphon Shafer.
+This software is copyright (c) 2017 by Gryphon Shafer.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
