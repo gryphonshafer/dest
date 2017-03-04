@@ -19,7 +19,10 @@ sub main {
     make();
     list();
     watches();
+
+    _setup_watch_lists();
     putwatch();
+    writewatch();
 
     t_teardown();
     done_testing();
@@ -109,7 +112,7 @@ sub watches {
     is( ( t_capture( sub { t_module->watches } ) )[0], "atd\n", 'watches()' );
 }
 
-sub putwatch {
+sub _setup_watch_lists {
     my ( $dest_a, $dest_b );
     ok( open( $dest_a, '>', 'dest_a' ) || 0, 'open dest_a file for write' );
     ok( open( $dest_b, '>', 'dest_b' ) || 0, 'open dest_b file for write' );
@@ -118,14 +121,34 @@ sub putwatch {
     print $dest_a $_, "\n" for ( qw( a b c ) );
     print $dest_b $_, "\n" for ( qw( b c d e ) );
     close $_ for ( $dest_a, $dest_b );
+}
 
-    is_deeply( [ t_module->watch_list ], [ qw(atd) ], 'watch_list' );
-    t_module->add('a');
-    is_deeply( [ t_module->watch_list ], [ qw( a atd ) ], 'watch_list' );
+sub putwatch {
+    is_deeply( [ t_module->watch_list ], [ qw(atd) ], 'watch_list 1' );
 
-    t_module->putwatch('dest_a');
-    is_deeply( [ t_module->watch_list ], [ qw( a b c ) ], 'watch_list' );
+    lives_ok( sub { t_module->add('a') }, 't_module->add("a")' );
+    is_deeply( [ t_module->watch_list ], [ qw( a atd ) ], 'watch_list 2' );
 
-    t_module->putwatch('dest_b');
-    is_deeply( [ t_module->watch_list ], [ qw( b c d e ) ], 'watch_list' );
+    lives_ok( sub { t_module->putwatch('dest_a') }, 'putwatch("dest_a")' );
+    is_deeply( [ t_module->watch_list ], [ qw( a b c ) ], 'watch_list 3' );
+
+    lives_ok( sub { t_module->putwatch('dest_b') }, 'putwatch("dest_b")' );
+    is_deeply( [ t_module->watch_list ], [ qw( b c d e ) ], 'watch_list 4' );
+}
+
+sub _read_watch_file {
+    my $watch_file;
+    open( my $watch_file, '<', 'dest.watch' ) or die $!;
+    my @watch_file = map { chomp; $_ } <$watch_file>;
+    return \@watch_file;
+}
+
+sub writewatch {
+    lives_ok( sub { t_module->putwatch('dest_a') }, 'putwatch("dest_a")' );
+    lives_ok( sub { t_module->writewatch }, 'writewatch 1' );
+    is_deeply( _read_watch_file(), [ qw( a b c ) ], 'watch file check 1' );
+
+    lives_ok( sub { t_module->putwatch('dest_b') }, 'putwatch("dest_b")' );
+    lives_ok( sub { t_module->writewatch }, 'writewatch 2' );
+    is_deeply( _read_watch_file(), [ qw( b c d e ) ], 'watch file check 2' );
 }
