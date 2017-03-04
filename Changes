@@ -1,6 +1,8 @@
 Revision history for App::Dest
 
 {{$NEXT}}
+        - POD improvements and extentions
+        - Add test coverage for writewatch
 
 1.15      2017-02-24 12:44:17-08:00 America/Los_Angeles
         - Support for non-root directory execution
