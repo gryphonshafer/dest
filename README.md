@@ -4,7 +4,7 @@ App::Dest - Deployment State Manager
 
 # VERSION
 
-version 1.16
+version 1.17
 
 [![Build Status](https://travis-ci.org/gryphonshafer/dest.svg)](https://travis-ci.org/gryphonshafer/dest)
 [![Coverage Status](https://coveralls.io/repos/gryphonshafer/dest/badge.png)](https://coveralls.io/r/gryphonshafer/dest)
@@ -502,7 +502,7 @@ You can also look for additional information at:
 
 # AUTHOR
 
-Gryphon Shafer &lt;gryphon@cpan.org>
+Gryphon Shafer <gryphon@cpan.org>
 
 # COPYRIGHT AND LICENSE
 

@@ -253,7 +253,7 @@ sub status {
                     print "  + $b\n";
                 }
                 else {
-                    ( my $action = $b ) =~ s,/(?:deploy|verify|revert)$,,;
+                    ( my $action = $b ) =~ s,/(?:deploy|verify|revert)(?:\.[^\/]+)?$,,;
                     print "  $action\n" unless ( $seen_actions{$action}++ );
                     print "    M $b\n";
                 }
@@ -596,7 +596,11 @@ __END__
 
 =end :badges
 
+=begin :prelude
+
 =for test_synopsis BEGIN { die "SKIP: skip synopsis check because it's non-Perl\n"; }
+
+=end :prelude
 
 =head1 SYNOPSIS
 
