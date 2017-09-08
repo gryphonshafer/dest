@@ -1,6 +1,8 @@
 Revision history for App::Dest
 
 {{$NEXT}}
+
+1.17      2017-09-08 11:23:52-07:00 America/Los_Angeles
         - Minor status display fix for actions with file suffixes
         - Tiny test warning cleanup
 
