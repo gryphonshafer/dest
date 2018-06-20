@@ -197,11 +197,9 @@ sub make {
         die "Failed to fully make $path; check permissions or existing files\n";
     };
 
-    $self->list($path);
+    $self->expand($path);
     return 0;
 }
-
-
 
 sub expand {
     my ( $self, $path ) = @_;
@@ -222,6 +220,7 @@ sub list {
             wanted   => sub {
                 return unless ( m|/deploy(?:\.[^\/]+)?| );
                 ( my $action = $_ ) =~ s|/deploy(?:\.[^\/]+)?||;
+
                 push( @actions, $action ) if (
                     not defined $filter or
                     index( $action, $filter ) > -1
@@ -229,8 +228,8 @@ sub list {
             },
         }, $path );
 
+        print $path, "\n";
         if (@actions) {
-            print $path, "\n";
             print '  ', $_, "\n" for ( sort @actions );
         }
     }
