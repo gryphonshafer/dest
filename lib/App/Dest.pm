@@ -201,28 +201,36 @@ sub make {
     return 0;
 }
 
-sub list {
+
+
+sub expand {
     my ( $self, $path ) = @_;
+    print join( ' ', map { <"$path/$_*"> } qw( deploy verify revert ) ), "\n";
+    return 0;
+}
+
+sub list {
+    my ( $self, $filter ) = @_;
     die "Project not initialized\n" unless _env();
 
-    if ($path) {
-        print join( ' ', map { <"$path/$_*"> } qw( deploy verify revert ) ), "\n";
-    }
-    else {
-        for my $path ( sort $self->watch_list ) {
+    for my $path ( sort $self->watch_list ) {
+        my @actions;
+
+        find( {
+            follow   => 1,
+            no_chdir => 1,
+            wanted   => sub {
+                return unless ( m|/deploy(?:\.[^\/]+)?| );
+                ( my $action = $_ ) =~ s|/deploy(?:\.[^\/]+)?||;
+                push( @actions, $action ) if (
+                    not defined $filter or
+                    index( $action, $filter ) > -1
+                );
+            },
+        }, $path );
+
+        if (@actions) {
             print $path, "\n";
-            my @actions;
-
-            find( {
-                follow   => 1,
-                no_chdir => 1,
-                wanted   => sub {
-                    return unless ( m|/deploy(?:\.[^\/]+)?| );
-                    ( my $action = $_ ) =~ s|/deploy(?:\.[^\/]+)?||;
-                    push( @actions, $action );
-                },
-            }, $path );
-
             print '  ', $_, "\n" for ( sort @actions );
         }
     }
@@ -628,7 +636,8 @@ dest COMMAND [DIR || NAME]
     dest writewatch      # creates watch file in project root directory
 
     dest make NAME [EXT] # create a named template set (set of 3 files)
-    dest list [NAME]     # dump a list of the template set (set of 3 files)
+    dest expand NAME     # dump a list of the template set (set of 3 files)
+    dest list [FILTER]   # list all actions in all watches
 
     dest status          # check status of tracked directories
     dest diff [NAME]     # display a diff of any modified actions
@@ -749,15 +758,18 @@ Optionally, you can specify an extention for the created files. For example:
     #    db/schema/revert.sql
     #    db/schema/verify.sql
 
-=head2 list [NAME]
+=head2 expand NAME
 
-If provided a name of an action, it does the last step of C<make>. It lists
-out the relative paths of the 3 files, so you can do stuff like:
+This command lists out the relative paths and names of the 3 files of the
+action provided, so you can do stuff like:
 
-    vi `dest list db/schema`
+    vi `dest expand db/schema`
 
-If not provided a name of an action, it will list all tracked directories and
-every action within each directory.
+=head2 list [FILTER]
+
+This command will list all tracked directories and every action within each
+directory. If provided a filter, it will limit what's displayed to actions
+containing the filter.
 
 =head2 status
 

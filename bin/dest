@@ -11,7 +11,7 @@ use App::Dest;
 
 my @commands = qw(
     init add rm watches putwatch writewatch
-    make list status diff clean preinstall
+    make expand list status diff clean preinstall
     deploy redeploy revdeploy verify revert update
     man version
 );
