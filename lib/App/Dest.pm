@@ -7,7 +7,7 @@ use warnings;
 
 use File::Basename qw( dirname basename );
 use File::Copy 'copy';
-use File::Copy::Recursive 'dircopy';
+use File::Copy::Recursive qw( dircopy rcopy );
 use File::DirCompare ();
 use File::Find 'find';
 use File::Path qw( mkpath rmtree );
@@ -297,14 +297,24 @@ sub diff {
 }
 
 sub clean {
-    my ($self) = @_;
+    my $self = shift;
     die "Project not initialized\n" unless _env();
 
-    for ( map { _rel2root($_) } $self->watch_list ) {
-        my $dest = _rel2dir(".dest/$_");
-        rmtree($dest);
-        dircopy( _rel2dir($_), $dest );
+    if (@_) {
+        for (@_) {
+            my $dest = _rel2dir(".dest/$_");
+            rmtree($dest);
+            rcopy( _rel2dir($_), $dest );
+        }
     }
+    else {
+        for ( map { _rel2root($_) } $self->watch_list ) {
+            my $dest = _rel2dir(".dest/$_");
+            rmtree($dest);
+            dircopy( _rel2dir($_), $dest );
+        }
+    }
+
     return 0;
 }
 
@@ -619,7 +629,7 @@ dest COMMAND [DIR || NAME]
 
     dest status          # check status of tracked directories
     dest diff [NAME]     # display a diff of any modified actions
-    dest clean           # reset dest state to match current files/directories
+    dest clean [NAME]    # reset dest state to match current files/directories
     dest preinstall      # set dest state so an "update" will deploy everything
 
     dest deploy NAME     # deployment of a specific action
@@ -778,6 +788,12 @@ Let's say that for some reason you have a delta between what C<dest> thinks your
 system is and what your code says it ought to be, and you really believe your
 code is right. You can call C<clean> to tell C<dest> to just assume that what
 the code says is right.
+
+You can optionally provide a specific action or even a step of an action to
+clean. For example:
+
+    dest clean db/schema
+    dest clean db/schema/deploy
 
 =head2 preinstall
 
