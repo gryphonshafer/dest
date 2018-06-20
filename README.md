@@ -22,11 +22,12 @@ dest COMMAND \[DIR || NAME\]
     dest writewatch      # creates watch file in project root directory
 
     dest make NAME [EXT] # create a named template set (set of 3 files)
-    dest list [NAME]     # dump a list of the template set (set of 3 files)
+    dest expand NAME     # dump a list of the template set (set of 3 files)
+    dest list [FILTER]   # list all actions in all watches
 
     dest status          # check status of tracked directories
     dest diff [NAME]     # display a diff of any modified actions
-    dest clean           # reset dest state to match current files/directories
+    dest clean [NAME]    # reset dest state to match current files/directories
     dest preinstall      # set dest state so an "update" will deploy everything
 
     dest deploy NAME     # deployment of a specific action
@@ -143,15 +144,18 @@ Optionally, you can specify an extention for the created files. For example:
     #    db/schema/revert.sql
     #    db/schema/verify.sql
 
-## list \[NAME\]
+## expand NAME
 
-If provided a name of an action, it does the last step of `make`. It lists
-out the relative paths of the 3 files, so you can do stuff like:
+This command lists out the relative paths and names of the 3 files of the
+action provided, so you can do stuff like:
 
-    vi `dest list db/schema`
+    vi `dest expand db/schema`
 
-If not provided a name of an action, it will list all tracked directories and
-every action within each directory.
+## list \[FILTER\]
+
+This command will list all tracked directories and every action within each
+directory. If provided a filter, it will limit what's displayed to actions
+containing the filter.
 
 ## status
 
@@ -185,6 +189,12 @@ Let's say that for some reason you have a delta between what `dest` thinks your
 system is and what your code says it ought to be, and you really believe your
 code is right. You can call `clean` to tell `dest` to just assume that what
 the code says is right.
+
+You can optionally provide a specific action or even a step of an action to
+clean. For example:
+
+    dest clean db/schema
+    dest clean db/schema/deploy
 
 ## preinstall
 
