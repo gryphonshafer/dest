@@ -209,8 +209,9 @@ sub list {
         print join( ' ', map { <"$path/$_*"> } qw( deploy verify revert ) ), "\n";
     }
     else {
-        for my $path ( $self->watch_list ) {
+        for my $path ( sort $self->watch_list ) {
             print $path, "\n";
+            my @actions;
 
             find( {
                 follow   => 1,
@@ -218,9 +219,11 @@ sub list {
                 wanted   => sub {
                     return unless ( m|/deploy(?:\.[^\/]+)?| );
                     ( my $action = $_ ) =~ s|/deploy(?:\.[^\/]+)?||;
-                    print '  ', $action, "\n";
+                    push( @actions, $action );
                 },
             }, $path );
+
+            print '  ', $_, "\n" for ( sort @actions );
         }
     }
 
