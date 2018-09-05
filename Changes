@@ -1,6 +1,8 @@
 Revision history for App::Dest
 
 {{$NEXT}}
+
+1.20      2018-09-05 16:28:32-07:00 America/Los_Angeles
         - The real fix this time for status reporting of differences actions
 
 1.19      2018-09-05 15:50:09-07:00 America/Los_Angeles
