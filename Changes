@@ -1,6 +1,7 @@
 Revision history for App::Dest
 
 {{$NEXT}}
+        - Fix status reporting of differences actions (display only)
 
 1.18      2018-06-20 16:31:42-07:00 America/Los_Angeles
         - Adding Perl versions to test; annual general update for 2018
