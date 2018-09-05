@@ -257,7 +257,7 @@ sub status {
                 print 'diff - ', $this_path, "\n" unless ( $printed_path++ );
 
                 if ( not $b ) {
-                    print '  - ', substr( $a, 6 ), "\n";
+                    print '  - ', _rel2dir( substr( _rel2root($a), 6 ) ), "\n";
                 }
                 elsif ( not $a ) {
                     print "  + $b\n";

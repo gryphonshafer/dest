@@ -1,6 +1,7 @@
 Revision history for App::Dest
 
 {{$NEXT}}
+        - The real fix this time for status reporting of differences actions
 
 1.19      2018-09-05 15:50:09-07:00 America/Los_Angeles
         - Fix status reporting of differences actions (display only)
