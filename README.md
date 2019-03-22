@@ -4,7 +4,7 @@ App::Dest - Deployment State Manager
 
 # VERSION
 
-version 1.20
+version 1.21
 
 [![Build Status](https://travis-ci.org/gryphonshafer/dest.svg)](https://travis-ci.org/gryphonshafer/dest)
 [![Coverage Status](https://coveralls.io/repos/gryphonshafer/dest/badge.png)](https://coveralls.io/r/gryphonshafer/dest)
@@ -335,6 +335,9 @@ a revert file for some action and you checkout your working directory to a
 point in time prior to the revert file existing, `dest` maintains a copy of the
 original revert file so it can revert the action. However, it will always rely
 on whatever wrapper is in the current working directory.
+
+The `dest.wrap` is called with two parameters: first, the name of the change
+program, and second, the action type ("deploy", "revert", "verify").
 
 # WATCH FILE
 

@@ -539,7 +539,7 @@ sub _execute {
             }
 
             run(
-                [ grep { defined } ( ($wrap) ? $wrap : undef ), $file ],
+                [ grep { defined } ( ($wrap) ? $wrap : undef ), $file, $type ],
                 \undef, \$out, \$err,
             ) or $died = 1;
         }
@@ -948,6 +948,9 @@ a revert file for some action and you checkout your working directory to a
 point in time prior to the revert file existing, C<dest> maintains a copy of the
 original revert file so it can revert the action. However, it will always rely
 on whatever wrapper is in the current working directory.
+
+The C<dest.wrap> is called with two parameters: first, the name of the change
+program, and second, the action type ("deploy", "revert", "verify").
 
 =head1 WATCH FILE
 
