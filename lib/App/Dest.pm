@@ -137,7 +137,7 @@ sub rm {
 sub watch_list {
     _env();
     open( my $watch, '<', _rel2dir('.dest/watch') ) or die "Unable to read ~/.dest/watch file\n";
-    return sort { $a cmp $b } map { chomp; _rel2dir($_) } <$watch>;
+    return sort map { chomp; _rel2dir($_) } <$watch>;
 }
 
 sub watches {
@@ -211,7 +211,7 @@ sub list {
     my ( $self, $filter ) = @_;
     die "Project not initialized\n" unless _env();
 
-    for my $path ( sort $self->watch_list ) {
+    for my $path ( $self->watch_list ) {
         my @actions;
 
         find( {
