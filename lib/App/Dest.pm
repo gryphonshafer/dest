@@ -426,17 +426,22 @@ sub update {
         }
         else {
             $a =~ s|\.dest/||;
-            $a =~ s|/(\w+)$||;
-            $b =~ s|/(\w+)$||;
+            $b =~ m|/(\w+)$|;
 
             my $type = $1;
 
             if ( $type and $type eq 'deploy' ) {
+                $a =~ s|/\w+$||;
+                $b =~ s|/\w+$||;
+
                 $self->revert($a);
                 $self->deploy($b);
             }
             else {
-                dircopy( $a, _rel2dir( '.dest' . _rel2root($a) ) );
+                $a =~ s|/[^/]+$||;
+
+                $self->revert($a);
+                $self->deploy($a);
             }
         }
     } ) for (@watches);
