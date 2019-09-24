@@ -1228,13 +1228,6 @@ Inside the C<data/stuff/deploy.pl> file, include the following line:
 
     # dest.prereq: db/schema
 
-Dependencies work in both deploy and revert files. Reverting the schema likely
-means dropping tables, so including a dependency to revert the data in those
-tables is probably just a waste of time. But if you really wanted to, you could
-optionally include in C<db/schema/revert.sql> the following line:
-
-    -- dest.prereq: data/stuff
-
 =head2 Other Developers
 
 Now let's say you invite a friend or coworker to the project. That person might
