@@ -4,42 +4,42 @@ App::Dest - Deployment State Manager
 
 # VERSION
 
-version 1.22
+version 1.23
 
 [![Build Status](https://travis-ci.org/gryphonshafer/dest.svg)](https://travis-ci.org/gryphonshafer/dest)
 [![Coverage Status](https://coveralls.io/repos/gryphonshafer/dest/badge.png)](https://coveralls.io/r/gryphonshafer/dest)
 
 # SYNOPSIS
 
-dest COMMAND \[DIR || NAME\]
+dest COMMAND \[OPTIONS\]
 
-    dest init            # initialize dest for a project
-    dest add DIR         # add a directory to dest tracking list
-    dest rm DIR          # remove a directory from dest tracking list
+    dest init               # initialize dest for a project
+    dest add DIR            # add a directory to dest tracking list
+    dest rm DIR             # remove a directory from dest tracking list
 
-    dest watches         # returns a list of watched directories
-    dest putwatch FILE   # set watch list to be what's in a file
-    dest writewatch      # creates watch file in project root directory
+    dest watches            # returns a list of watched directories
+    dest putwatch FILE      # set watch list to be what's in a file
+    dest writewatch         # creates watch file in project root directory
 
-    dest make NAME [EXT] # create a named template set (set of 3 files)
-    dest expand NAME     # dump a list of the template set (set of 3 files)
-    dest list [FILTER]   # list all actions in all watches
+    dest make NAME [EXT]    # create a named template set (set of 3 files)
+    dest expand NAME        # dump a list of the template set (set of 3 files)
+    dest list [FILTER]      # list all actions in all watches
 
-    dest status          # check status of tracked directories
-    dest diff [NAME]     # display a diff of any modified actions
-    dest clean [NAME]    # reset dest state to match current files/directories
-    dest preinstall      # set dest state so an "update" will deploy everything
+    dest status             # check status of tracked directories
+    dest diff [NAME]        # display a diff of any modified actions
+    dest clean [NAME]       # reset dest state to match current files/dirs
+    dest preinstall         # set dest state so an update will deploy everything
 
-    dest deploy NAME     # deployment of a specific action
-    dest verify [NAME]   # verification of tracked actions or specific action
-    dest revert NAME     # revertion of a specific action
-    dest redeploy NAME   # deployment of a specific action
-    dest revdeploy NAME  # revert and deployment of a specific action
-    dest update [DIRS]   # automaticall deploy or revert to cause currency
+    dest deploy NAME [-d]   # deployment of a specific action
+    dest verify [NAME]      # verification of tracked actions or specific action
+    dest revert NAME [-d]   # revertion of a specific action
+    dest redeploy NAME [-d] # deployment of a specific action
+    dest revdeploy NAME     # revert and deployment of a specific action
+    dest update [INCS] [-d] # automaticall deploy or revert to cause currency
 
-    dest version         # dest current version
-    dest help            # display command synposis
-    dest man             # display man page
+    dest version            # dest current version
+    dest help               # display command synposis
+    dest man                # display man page
 
 # DESCRIPTION
 
@@ -64,9 +64,9 @@ the development history.
 See below for an example scenario that may help illustrate using `dest` in a
 pseudo real world situation.
 
-Note that using `dest` for production deployment, provisioning, or configuration
-management is not advised. Use a full-featured configuration management tool
-instead.
+Note that using `dest` for production deployment, provisioning, or
+configuration management is not advised. Use a full-featured configuration
+management tool instead.
 
 # COMMANDS
 
@@ -157,6 +157,12 @@ This command will list all tracked directories and every action within each
 directory. If provided a filter, it will limit what's displayed to actions
 containing the filter.
 
+## prereqs \[FILTER\]
+
+This command will list every action within any tracked directory, then for each
+action, it will list any prereqs of that action. If provided a filter, it will
+limit what's displayed to actions containing the filter.
+
 ## status
 
 This command will tell you your current state compared to what the current code
@@ -213,7 +219,7 @@ Here's an example of what you might want:
     dest preinstall
     dest update
 
-## deploy NAME
+## deploy NAME \[-d\]
 
 This tells `dest` to deploy a specific action. For example, if you called
 `status` and got back results like in the status example above, you might then
@@ -223,6 +229,9 @@ want to:
 
 Note that you shouldn't add "/deploy" to the end of that. Also note that a
 `deploy` call will automatically call `verify` when complete.
+
+Adding a "-d" flag to the command will cause a "dry run" to run, which will
+not perform any actions but will instead report what actions would happen.
 
 ## verify \[NAME\]
 
@@ -234,25 +243,31 @@ user input/output, verify files must return some value that is either true
 or false. `dest` will assume that if it sees a true value, verification is
 confirmed. If it receives a false value, verification is assumed to have failed.
 
-## revert NAME
+## revert NAME \[-d\]
 
 This tells `dest` to revert a specific action. For example, if you deployed
 `db/new_function` but then you wanted to revert it, you'd:
 
     dest revert db/new_function
 
-## redeploy NAME
+Adding a "-d" flag to the command will cause a "dry run" to run, which will
+not perform any actions but will instead report what actions would happen.
+
+## redeploy NAME \[-d\]
 
 This is exactly the same as deploy, except that if you've already deployed an
 action, "redeploy" will let you deploy the action again, whereas "deploy"
 shouldn't.
+
+Adding a "-d" flag to the command will cause a "dry run" to run, which will
+not perform any actions but will instead report what actions would happen.
 
 ## revdeploy NAME
 
 This is exactly the same as conducting a revert of an action followed by a
 deploy of the same action.
 
-## update \[DIRS\]
+## update \[INCS\] \[-d\]
 
 This will automatically deploy or revert as appropriate to make your system
 match the code. This will likely be the most common command you run.
@@ -266,12 +281,15 @@ If there are actions that are in the code that have been deployed, but the
 "deploy" file then deploy the new "deploy" file. (And note that the deployment
 will automatically call `verify`.)
 
-You can optionally add one or more directories to the end of the update command
-to restrict the update to only operate within the directories you specify.
-This will not prevent cross-directory dependencies, however. For example, if
-you have two tracked directories and limit the update to only one directory and
-within the directory there is an action with a dependency on an action in the
-non-specified directory, that action will be triggered.
+You can optionally add one or more "INCS" strings to the update command to
+restrict the update to only perform operations that include one of the "INCS" in
+its action file. So for example, let's say you have a "db/changes" directory
+with some actions and a "etc/changes" directory with some actions. If you were
+to specify "db/changes" as one of your "INCS", this would only  update actions
+from that directory tree.
+
+Adding a "-d" flag to the command will cause a "dry run" to run, which will
+not perform any actions but will instead report what actions would happen.
 
 ## version
 
@@ -287,16 +305,19 @@ Displays the man page for `dest`.
 
 # DEPENDENCIES
 
-Sometimes you may have deployments (or revertions) that have dependencies on
-other deployments (or revertions). For example, if you want to add a column
-to a table in a database, that table (and the database) have to exist already.
+Sometimes you may have deployments that have dependencies on other deployments.
+For example, if you want to add a column to a table in a database, that table
+(and the database) have to exist already.
 
-To define a dependency, place the action's name after a `dest.prereq` marker,
-which itself likely will be after a comment. (The comment marker can be
-whatever the language of the deployment file is.) For example, in a SQL file
-that adds a column, you might have:
+To define a dependency, place the action's name after a `dest.prereq` marker in
+the deploy action file. This will likely need to be in the form of a comment.
+(The comment marker can be whatever the language of the deployment file is.) For
+example, in a SQL file that adds a column, you might have:
 
     -- dest.prereq: db/schema
+
+Dependencies are defined only in deploy actions. Reverting infers its dependency
+tree from the  dependencies defined in deploy actions, just in reverse.
 
 # WRAPPERS
 
@@ -310,10 +331,10 @@ Given our database example, we'd likely want each of the action sub-files to be
 pure SQL. In that case, we'll need to write some wrapper program that `dest`
 will run that will then consume and run the SQL files as appropriate.
 
-`dest` looks for wrapper files up the chain from the location of the action file.
-Specifically, it'll assume a file is a wrapper if the filename is "dest.wrap".
-If such a file is found, then that file is called, and the name of the action
-sub-file is passed as its only argument.
+`dest` looks for wrapper files up the chain from the location of the action
+file. Specifically, it'll assume a file is a wrapper if the filename is
+"dest.wrap". If such a file is found, then that file is called, and the name of
+the action sub-file is passed as its only argument.
 
 As an example, let's say I created an action set that looked like this
 
@@ -349,11 +370,11 @@ root directory of the project) to watch.
 If this "dest.watch" file exists in the root directory of your project, `dest`
 will add the following behavior:
 
-During an "init" action, the `dest.watch` file will be read to setup all watched
-directories (as though you manually called the "add" action on each).
+During an "init" action, the `dest.watch` file will be read to setup all
+watched directories (as though you manually called the "add" action on each).
 
-During a "status" action, `dest` will report any differences between your current
-watch list and the `dest.watch` file.
+During a "status" action, `dest` will report any differences between your
+current watch list and the `dest.watch` file.
 
 During an "update" action, `dest` will automatically add (as if you manually
 called the "add" action) each directory in the `dest.watch` file that is
@@ -362,9 +383,9 @@ currently not watched by `dest` prior to executing the update action.
 # EXAMPLE SCENARIO
 
 To help illustrate what `dest` can do, consider the following example scenario.
-You start a new project that requires the use of a typical database. You want
-to control the schema of that database with progressively executed SQL files.
-You also have data operations that require more functionality than what SQL can
+You start a new project that requires the use of a typical database. You want to
+control the schema of that database with progressively executed SQL files. You
+also have data operations that require more functionality than what SQL can
 provide, so you'd like to have data operations handled by progressively executed
 Perl programs.
 
