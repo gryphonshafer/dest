@@ -56,7 +56,7 @@ stderr_is( sub {
 }, "Directory specified does not exist\n", 'no add not exists' );
 
 stdout_is( sub { App::Dest->watches }, "actions\n", 'watches (results)' );
-lives_ok( sub { App::Dest->putwatch('dest.watch.2') }, 'putwatch' );
+lives_ok( sub { App::Dest->putwatch('dest.watch2') }, 'putwatch' );
 stdout_is( sub { App::Dest->watches }, "actions\nactions2\n", 'watches (results) 2' );
 lives_ok( sub { App::Dest->writewatch }, 'writewatch' );
 
