@@ -1,6 +1,7 @@
 Revision history for App::Dest
 
 {{$NEXT}}
+        - Add name filter option to preinstall
 
 1.24      2019-10-02 15:52:33-07:00 America/Los_Angeles
         - POD update (deleted inaccurate legacy paragraph)

@@ -269,10 +269,19 @@ sub clean {
 sub preinstall {
     my $self = _new(shift);
 
-    for ( map { $self->_rel2root($_) } $self->_watch_list ) {
-        my $dest = $self->_rel2dir(".dest/$_");
-        rmtree($dest);
-        mkdir($dest);
+    if (@_) {
+        for (@_) {
+            my $dest = $self->_rel2dir(".dest/$_");
+            rmtree($dest);
+            mkdir($dest);
+        }
+    }
+    else {
+        for ( map { $self->_rel2root($_) } $self->_watch_list ) {
+            my $dest = $self->_rel2dir(".dest/$_");
+            rmtree($dest);
+            mkdir($dest);
+        }
     }
 
     return 0;
@@ -774,11 +783,12 @@ dest COMMAND [OPTIONS]
     dest make NAME [EXT]    # create a named template set (set of 3 files)
     dest expand NAME        # dump a list of the template set (set of 3 files)
     dest list [FILTER]      # list all actions in all watches
+    dest prereqs [FILTER]   # like "list" but include report of prereqs
 
     dest status             # check status of tracked directories
     dest diff [NAME]        # display a diff of any modified actions
     dest clean [NAME]       # reset dest state to match current files/dirs
-    dest preinstall         # set dest state so an update will deploy everything
+    dest preinstall [NAME]  # set dest state so an update will deploy everything
 
     dest deploy NAME [-d]   # deployment of a specific action
     dest verify [NAME]      # verification of tracked actions or specific action
@@ -929,7 +939,7 @@ yet been deployed (marked with a "+"), features that have been deployed in your
 current system state but are missing from the code (marked with a "-"), and
 changes to previously existing files (marked with an "M").
 
-=head2 diff
+=head2 diff [NAME]
 
 This will display a diff delta of the differences of any modified action files.
 You can specify an optional name parameter that refers to a tracking directory,
@@ -939,7 +949,7 @@ action name, or specific sub-action.
     dest diff db/schema
     dest diff db/schema/deploy
 
-=head2 clean
+=head2 clean [NAME]
 
 Let's say that for some reason you have a delta between what C<dest> thinks your
 system is and what your code says it ought to be, and you really believe your
@@ -947,12 +957,12 @@ code is right. You can call C<clean> to tell C<dest> to just assume that what
 the code says is right.
 
 You can optionally provide a specific action or even a step of an action to
-clean. For example:
+C<clean>. For example:
 
     dest clean db/schema
     dest clean db/schema/deploy
 
-=head2 preinstall
+=head2 preinstall [NAME]
 
 Let's say you're setting up a new system or installing the project/application,
 so you start by creating yourself a working directory. At some point, you'll
@@ -968,6 +978,9 @@ Here's an example of what you might want:
     dest add path_to/other_stuff
     dest preinstall
     dest update
+
+You can optionally provide a specific action or even a step of an action to
+C<preinstall> similar to C<clean>.
 
 =head2 deploy NAME [-d]
 
