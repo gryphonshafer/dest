@@ -4,7 +4,7 @@ App::Dest - Deployment State Manager
 
 # VERSION
 
-version 1.23
+version 1.24
 
 [![Build Status](https://travis-ci.org/gryphonshafer/dest.svg)](https://travis-ci.org/gryphonshafer/dest)
 [![Coverage Status](https://coveralls.io/repos/gryphonshafer/dest/badge.png)](https://coveralls.io/r/gryphonshafer/dest)
@@ -485,13 +485,6 @@ the schema action to have already been deployed.
 Inside the `data/stuff/deploy.pl` file, include the following line:
 
     # dest.prereq: db/schema
-
-Dependencies work in both deploy and revert files. Reverting the schema likely
-means dropping tables, so including a dependency to revert the data in those
-tables is probably just a waste of time. But if you really wanted to, you could
-optionally include in `db/schema/revert.sql` the following line:
-
-    -- dest.prereq: data/stuff
 
 ## Other Developers
 
