@@ -597,6 +597,14 @@ sub _build_execute_stack {
     my $prereqs       = { map { $_->{action} => $_->{prereqs} } @{ $self->_prereq_tree->{actions} } };
     my $state         = $self->_status_data->{actions};
 
+    if ( $type eq 'revert' ) {
+        my $postreqs;
+        for my $action ( keys %$prereqs ) {
+            push( @{ $postreqs->{$_} }, $action ) for ( @{ $prereqs->{$action} } );
+        }
+        $prereqs = $postreqs;
+    }
+
     my ( @execute_stack, $wraps );
     $seen_action //= {};
 
