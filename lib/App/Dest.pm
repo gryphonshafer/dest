@@ -1111,8 +1111,8 @@ Let's then also say that the C<example/ls/deploy> file contains: C<ls>
 
 I could create a deployment file C<example/dest.wrap> that looked like this:
 
-    #!/bin/bash
-    /bin/bash "$1"
+    #!/bin/sh
+    /bin/sh "$1"
 
 Wrappers will only ever be run from the current code. For example, if you have
 a revert file for some action and you checkout your working directory to a
