@@ -1,6 +1,7 @@
 Revision history for App::Dest
 
 {{$NEXT}}
+        - Remove explicit path to grep in test wrappers for BSD systems
 
 1.26      2019-10-21 11:41:16-07:00 America/Los_Angeles
         - Remove bash dependency in tests/POD for sh to be more compatible
