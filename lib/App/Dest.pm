@@ -757,8 +757,8 @@ __END__
 =begin :badges
 
 =for markdown
-[![Build Status](https://travis-ci.org/gryphonshafer/dest.svg)](https://travis-ci.org/gryphonshafer/dest)
-[![Coverage Status](https://coveralls.io/repos/gryphonshafer/dest/badge.png)](https://coveralls.io/r/gryphonshafer/dest)
+[![build](https://github.com/gryphonshafer/dest/workflows/build/badge.svg)](https://github.com/gryphonshafer/dest/actions?query=workflow%3Abuild)
+[![codecov](https://codecov.io/gh/gryphonshafer/dest/graph/badge.svg)](https://codecov.io/gh/gryphonshafer/dest)
 
 =end :badges
 
@@ -1284,8 +1284,8 @@ You can also look for additional information at:
 =for :list
 * L<GitHub|https://github.com/gryphonshafer/dest>
 * L<MetaCPAN|https://metacpan.org/pod/App::Dest>
-* L<Travis CI|https://travis-ci.org/gryphonshafer/dest>
-* L<Coveralls|https://coveralls.io/r/gryphonshafer/dest>
+* L<GitHub Actions|https://github.com/gryphonshafer/dest/actions>
+* L<Codecov|https://codecov.io/gh/gryphonshafer/dest>
 * L<CPANTS|http://cpants.cpanauthors.org/dist/App-Dest>
 * L<CPAN Testers|http://www.cpantesters.org/distro/A/App-Dest.html>
 
