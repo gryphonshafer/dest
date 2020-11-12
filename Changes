@@ -1,6 +1,8 @@
 Revision history for App::Dest
 
 {{$NEXT}}
+        - Migrate Travis CI and Coveralls to GitHub Actions and Codecov
+        - Update copyright year
 
 1.27      2019-10-22 08:36:14-07:00 America/Los_Angeles
         - Remove explicit path to grep in test wrappers for BSD systems

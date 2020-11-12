@@ -4,10 +4,10 @@ App::Dest - Deployment State Manager
 
 # VERSION
 
-version 1.27
+version 1.28
 
-[![Build Status](https://travis-ci.org/gryphonshafer/dest.svg)](https://travis-ci.org/gryphonshafer/dest)
-[![Coverage Status](https://coveralls.io/repos/gryphonshafer/dest/badge.png)](https://coveralls.io/r/gryphonshafer/dest)
+[![build](https://github.com/gryphonshafer/dest/workflows/build/badge.svg)](https://github.com/gryphonshafer/dest/actions?query=workflow%3Abuild)
+[![codecov](https://codecov.io/gh/gryphonshafer/dest/graph/badge.svg)](https://codecov.io/gh/gryphonshafer/dest)
 
 # SYNOPSIS
 
@@ -518,16 +518,14 @@ then deploy the other developer's new actions.
 
 # SEE ALSO
 
-[App::Sqitch](https://metacpan.org/pod/App::Sqitch).
+[App::Sqitch](https://metacpan.org/pod/App%3A%3ASqitch).
 
 You can also look for additional information at:
 
 - [GitHub](https://github.com/gryphonshafer/dest)
-- [CPAN](http://search.cpan.org/dist/App-Dest)
 - [MetaCPAN](https://metacpan.org/pod/App::Dest)
-- [AnnoCPAN](http://annocpan.org/dist/App-Dest)
-- [Travis CI](https://travis-ci.org/gryphonshafer/dest)
-- [Coveralls](https://coveralls.io/r/gryphonshafer/dest)
+- [GitHub Actions](https://github.com/gryphonshafer/dest/actions)
+- [Codecov](https://codecov.io/gh/gryphonshafer/dest)
 - [CPANTS](http://cpants.cpanauthors.org/dist/App-Dest)
 - [CPAN Testers](http://www.cpantesters.org/distro/A/App-Dest.html)
 
@@ -537,7 +535,7 @@ Gryphon Shafer <gryphon@cpan.org>
 
 # COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2018 by Gryphon Shafer.
+This software is copyright (c) 2021 by Gryphon Shafer.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
