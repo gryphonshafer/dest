@@ -6,7 +6,7 @@ App::Dest - Deployment State Manager
 
 version 1.28
 
-[![build](https://github.com/gryphonshafer/dest/workflows/build/badge.svg)](https://github.com/gryphonshafer/dest/actions?query=workflow%3Abuild)
+[![test](https://github.com/gryphonshafer/dest/workflows/test/badge.svg)](https://github.com/gryphonshafer/dest/actions?query=workflow%3Atest)
 [![codecov](https://codecov.io/gh/gryphonshafer/dest/graph/badge.svg)](https://codecov.io/gh/gryphonshafer/dest)
 
 # SYNOPSIS
