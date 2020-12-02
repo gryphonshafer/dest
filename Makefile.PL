@@ -16,7 +16,7 @@ my %WriteMakefileArgs = (
   "EXE_FILES" => [
     "bin/dest"
   ],
-  "LICENSE" => "perl",
+  "LICENSE" => "artistic_2",
   "MIN_PERL_VERSION" => "5.016003",
   "NAME" => "App::Dest",
   "PREREQ_PM" => {
