@@ -1,9 +1,8 @@
 package App::Dest;
 # ABSTRACT: Deployment State Manager
 
-use 5.016_003;
-use strict;
-use warnings;
+use 5.016;
+use exact;
 
 use File::Basename qw( dirname basename );
 use File::Copy 'copy';
@@ -14,7 +13,6 @@ use File::Path qw( mkpath rmtree );
 use IPC::Run 'run';
 use Path::Tiny 'path';
 use Text::Diff ();
-use Try::Tiny qw( try catch finally );
 
 # VERSION
 

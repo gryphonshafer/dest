@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use 5.016003;
+use 5.016;
 
 use ExtUtils::MakeMaker;
 
@@ -17,7 +17,7 @@ my %WriteMakefileArgs = (
     "bin/dest"
   ],
   "LICENSE" => "artistic_2",
-  "MIN_PERL_VERSION" => "5.016003",
+  "MIN_PERL_VERSION" => "5.016",
   "NAME" => "App::Dest",
   "PREREQ_PM" => {
     "File::Basename" => 0,
@@ -30,7 +30,7 @@ my %WriteMakefileArgs = (
     "Path::Tiny" => 0,
     "Pod::Usage" => 0,
     "Text::Diff" => 0,
-    "Try::Tiny" => 0,
+    "exact" => 0,
     "strict" => 0,
     "warnings" => 0
   },
@@ -39,8 +39,8 @@ my %WriteMakefileArgs = (
     "File::Spec" => 0,
     "IO::Handle" => 0,
     "IPC::Open3" => 0,
+    "Test2::V0" => 0,
     "Test::More" => 0,
-    "Test::Most" => 0,
     "Test::Output" => 0
   },
   "VERSION" => "1.28",
@@ -64,11 +64,11 @@ my %FallbackPrereqs = (
   "IPC::Run" => 0,
   "Path::Tiny" => 0,
   "Pod::Usage" => 0,
+  "Test2::V0" => 0,
   "Test::More" => 0,
-  "Test::Most" => 0,
   "Test::Output" => 0,
   "Text::Diff" => 0,
-  "Try::Tiny" => 0,
+  "exact" => 0,
   "strict" => 0,
   "warnings" => 0
 );
