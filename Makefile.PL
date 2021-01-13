@@ -30,7 +30,7 @@ my %WriteMakefileArgs = (
     "Path::Tiny" => 0,
     "Pod::Usage" => 0,
     "Text::Diff" => 0,
-    "exact" => 0,
+    "exact" => "1.14",
     "strict" => 0,
     "warnings" => 0
   },
@@ -43,7 +43,7 @@ my %WriteMakefileArgs = (
     "Test::More" => 0,
     "Test::Output" => 0
   },
-  "VERSION" => "1.28",
+  "VERSION" => "1.29",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -68,7 +68,7 @@ my %FallbackPrereqs = (
   "Test::More" => 0,
   "Test::Output" => 0,
   "Text::Diff" => 0,
-  "exact" => 0,
+  "exact" => "1.14",
   "strict" => 0,
   "warnings" => 0
 );
