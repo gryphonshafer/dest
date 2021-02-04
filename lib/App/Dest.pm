@@ -35,7 +35,8 @@ sub init {
                 $self->add($watch);
             }
             catch {
-                push( @errors, $watch . ': ' . $_ );
+                my $e = $_ || $@;
+                push( @errors, $watch . ': ' . $e );
             };
         }
 
@@ -580,7 +581,8 @@ sub _status_data {
             )
         }
         catch {
-            $data->{state} = '?' if ( /Not a directory/ );
+            my $e = $_ || $@;
+            $data->{state} = '?' if ( $e =~ /Not a directory/ );
         }
         finally {
             $data->{state} = 'ok' unless $printed_path;
@@ -707,7 +709,7 @@ sub _execute_action {
             ) or $died = 1;
         }
         catch {
-            $err = $_;
+            $err = $_ || $@;
         };
 
         if ($err) {
