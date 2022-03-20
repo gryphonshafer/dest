@@ -4,7 +4,7 @@ App::Dest - Deployment State Manager
 
 # VERSION
 
-version 1.30
+version 1.31
 
 [![test](https://github.com/gryphonshafer/dest/workflows/test/badge.svg)](https://github.com/gryphonshafer/dest/actions?query=workflow%3Atest)
 [![codecov](https://codecov.io/gh/gryphonshafer/dest/graph/badge.svg)](https://codecov.io/gh/gryphonshafer/dest)
@@ -535,7 +535,7 @@ Gryphon Shafer <gryphon@cpan.org>
 
 # COPYRIGHT AND LICENSE
 
-This software is Copyright (c) 2013-2021 by Gryphon Shafer.
+This software is Copyright (c) 2013-2050 by Gryphon Shafer.
 
 This is free software, licensed under:
 

@@ -1,6 +1,7 @@
 Revision history for App::Dest
 
 {{$NEXT}}
+        - Minor documentation update
 
 1.30      2021-02-04 14:50:52-08:00 America/Los_Angeles
         - Pre-support for exact v1.15 try implementation switch
