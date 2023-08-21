@@ -43,10 +43,7 @@ my %WriteMakefileArgs = (
     "Test::More" => 0,
     "Test::Output" => 0
   },
-  "VERSION" => "1.31
-    dest            # dest current version
-## version
-Displays the current `dest` version.",
+  "VERSION" => "1.32",
   "test" => {
     "TESTS" => "t/*.t"
   }
