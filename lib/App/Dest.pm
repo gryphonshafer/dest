@@ -271,7 +271,6 @@ sub preinstall {
         for (@_) {
             my $dest = $self->_rel2dir(".dest/$_");
             rmtree($dest);
-            mkdir($dest);
         }
     }
     else {
