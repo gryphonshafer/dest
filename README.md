@@ -4,7 +4,7 @@ App::Dest - Deployment State Manager
 
 # VERSION
 
-version 1.33
+version 1.34
 
 [![test](https://github.com/gryphonshafer/dest/workflows/test/badge.svg)](https://github.com/gryphonshafer/dest/actions?query=workflow%3Atest)
 [![codecov](https://codecov.io/gh/gryphonshafer/dest/graph/badge.svg)](https://codecov.io/gh/gryphonshafer/dest)
@@ -30,6 +30,7 @@ dest COMMAND \[OPTIONS\]
     dest diff [NAME]        # display a diff of any modified actions
     dest clean [NAME]       # reset dest state to match current files/dirs
     dest preinstall [NAME]  # set dest state so an update will deploy everything
+    dest nuke               # de-initialize dest; remove all dest stuff
 
     dest deploy NAME [-d]   # deployment of a specific action
     dest verify [NAME]      # verification of tracked actions or specific action
@@ -222,6 +223,12 @@ Here's an example of what you might want:
 
 You can optionally provide a specific action or even a step of an action to
 `preinstall` similar to `clean`.
+
+## nuke
+
+Completely remove all traces of `dest`. In effect, this is a de-initialization
+of `dest`, like an un-`init` command. It's like `preinstall`, but it reverses
+all initializations and watches.
 
 ## deploy NAME \[-d\]
 

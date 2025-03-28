@@ -13,7 +13,7 @@ my @commands = qw(
     init add rm
     watches putwatch writewatch
     make expand list prereqs
-    status diff clean preinstall
+    status diff clean preinstall nuke
     deploy redeploy revdeploy verify revert update
     man version
 );

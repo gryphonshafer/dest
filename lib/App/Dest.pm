@@ -284,6 +284,12 @@ sub preinstall {
     return 0;
 }
 
+sub nuke {
+    my $self = _new(shift);
+    rmtree( $self->_rel2dir('.dest') );
+    return 0;
+}
+
 sub deploy {
     my $self = _new(shift);
     my ( $dry_run, $action ) = _dry_check(@_);
@@ -786,6 +792,7 @@ dest COMMAND [OPTIONS]
     dest diff [NAME]        # display a diff of any modified actions
     dest clean [NAME]       # reset dest state to match current files/dirs
     dest preinstall [NAME]  # set dest state so an update will deploy everything
+    dest nuke               # de-initialize dest; remove all dest stuff
 
     dest deploy NAME [-d]   # deployment of a specific action
     dest verify [NAME]      # verification of tracked actions or specific action
@@ -978,6 +985,12 @@ Here's an example of what you might want:
 
 You can optionally provide a specific action or even a step of an action to
 C<preinstall> similar to C<clean>.
+
+=head2 nuke
+
+Completely remove all traces of C<dest>. In effect, this is a de-initialization
+of C<dest>, like an un-C<init> command. It's like C<preinstall>, but it reverses
+all initializations and watches.
 
 =head2 deploy NAME [-d]
 
