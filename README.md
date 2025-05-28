@@ -4,7 +4,7 @@ App::Dest - Deployment State Manager
 
 # VERSION
 
-version 1.34
+version 1.35
 
 [![test](https://github.com/gryphonshafer/dest/workflows/test/badge.svg)](https://github.com/gryphonshafer/dest/actions?query=workflow%3Atest)
 [![codecov](https://codecov.io/gh/gryphonshafer/dest/graph/badge.svg)](https://codecov.io/gh/gryphonshafer/dest)
@@ -138,13 +138,18 @@ So if you want, you can do something like this:
 
     vi `dest make db/schema`
 
-Optionally, you can specify an extention for the created files. For example:
+Optionally, you can specify an extension for the created files. For example:
 
     vi `dest make db/schema sql`
     # this will create and open in vi:
     #    db/schema/deploy.sql
     #    db/schema/revert.sql
     #    db/schema/verify.sql
+
+And optionally, you can include any date/time format supported by [POSIX](https://metacpan.org/pod/POSIX)
+`strftime`.
+
+    dest make db/%s_action sql
 
 ## expand NAME
 

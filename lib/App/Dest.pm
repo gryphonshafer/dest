@@ -12,6 +12,7 @@ use File::Find 'find';
 use File::Path qw( mkpath rmtree );
 use IPC::Run 'run';
 use Path::Tiny 'path';
+use POSIX 'strftime';
 use Text::Diff ();
 
 # VERSION
@@ -143,6 +144,8 @@ sub writewatch {
 sub make {
     my ( $self, $path, $ext ) = @_;
     die "No name specified; usage: dest make [path]\n" unless ($path);
+
+    $path = strftime( $path, localtime );
 
     $ext = '.' . $ext if ( defined $ext );
     $ext //= '';
@@ -900,13 +903,18 @@ So if you want, you can do something like this:
 
     vi `dest make db/schema`
 
-Optionally, you can specify an extention for the created files. For example:
+Optionally, you can specify an extension for the created files. For example:
 
     vi `dest make db/schema sql`
     # this will create and open in vi:
     #    db/schema/deploy.sql
     #    db/schema/revert.sql
     #    db/schema/verify.sql
+
+And optionally, you can include any date/time format supported by L<POSIX>
+C<strftime>.
+
+    dest make db/%s_action sql
 
 =head2 expand NAME
 
